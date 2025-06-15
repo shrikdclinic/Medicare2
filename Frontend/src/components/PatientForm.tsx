@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Save, User, MapPin, Phone, Hash, Pill, FileText, UserCheck, ClipboardList } from "lucide-react";
-import { PatientData, TreatmentEntry } from "@/types/patient";
+
+const API_BASE_URL = 'http://localhost:3001/api';
 
 const PatientForm = () => {
   const { toast } = useToast();
@@ -51,45 +51,44 @@ const PatientForm = () => {
           description: "Please fill in all required fields (Name, Age, Contact Number)",
           variant: "destructive",
         });
+        setIsSubmitting(false);
         return;
       }
 
-      const refNumber = formData.referenceNumber || generateReferenceNumber();
+      const token = localStorage.getItem('authToken');
       
-      // Create initial treatment entry if prescriptions or advisories are provided
-      const treatmentEntries: TreatmentEntry[] = [];
-      if (formData.medicinePrescriptions || formData.advisories) {
-        treatmentEntries.push({
-          id: Date.now().toString(),
-          date: new Date().toISOString().split('T')[0],
-          medicinePrescriptions: formData.medicinePrescriptions,
-          advisories: formData.advisories,
+      if (!token) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to create a patient record",
+          variant: "destructive",
         });
+        setIsSubmitting(false);
+        return;
       }
 
-      const patientData: PatientData = {
-        id: Date.now().toString(),
-        patientName: formData.patientName,
-        age: formData.age,
-        address: formData.address,
-        referenceNumber: refNumber,
-        referencePerson: formData.referencePerson,
-        contactNumber: formData.contactNumber,
-        patientProblem: formData.patientProblem,
-        dateCreated: new Date().toISOString(),
-        treatmentEntries,
-      };
+      // Create patient via API
+      const response = await fetch(`${API_BASE_URL}/patients`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...formData,
+          referenceNumber: formData.referenceNumber || generateReferenceNumber()
+        })
+      });
 
-      // Get existing patients from localStorage
-      const existingPatients = JSON.parse(localStorage.getItem('patients') || '[]');
-      const updatedPatients = [...existingPatients, patientData];
-      
-      // Save to localStorage
-      localStorage.setItem('patients', JSON.stringify(updatedPatients));
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create patient');
+      }
 
       toast({
         title: "Patient Record Saved",
-        description: `Patient ${formData.patientName} has been successfully registered with ID ${refNumber}`,
+        description: `Patient ${formData.patientName} has been successfully registered with ID ${data.data.referenceNumber}`,
       });
 
       // Reset form
@@ -106,6 +105,7 @@ const PatientForm = () => {
       });
 
     } catch (error) {
+      console.error('Error creating patient:', error);
       toast({
         title: "Error",
         description: "Failed to save patient record. Please try again.",

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Plus, Calendar, Pill, FileText, Trash2, UserCheck, ClipboardList } from "lucide-react";
+import { Save, Plus, Calendar, Pill, FileText, Trash2 } from "lucide-react";
 import { PatientData, TreatmentEntry } from "@/types/patient";
 
 interface EditPatientModalProps {
@@ -96,16 +95,10 @@ const EditPatientModal = ({ patient, isOpen, onClose, onSave }: EditPatientModal
   const handleSave = () => {
     if (editedPatient) {
       onSave(editedPatient);
-      toast({
-        title: "Patient Updated",
-        description: `${editedPatient.patientName}'s record has been updated successfully`,
-      });
-      onClose();
     }
   };
 
   const handleModalClose = () => {
-    // Only close if no unsaved changes or user confirms
     onClose();
   };
 

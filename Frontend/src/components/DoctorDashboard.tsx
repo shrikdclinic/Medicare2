@@ -1,15 +1,16 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Search, Download, Calendar, User, Phone, MapPin, Pill, FileText, Edit } from "lucide-react";
+import { Search, Download, Calendar, User, Phone, MapPin, Pill, FileText, Edit, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generatePDF } from "@/utils/pdfGenerator";
 import { PatientData } from "@/types/patient";
 import EditPatientModal from "@/components/EditPatientModal";
+
+const API_BASE_URL ='http://localhost:3001/api';
 
 const DoctorDashboard = () => {
   const { toast } = useToast();
@@ -17,14 +18,54 @@ const DoctorDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingPatient, setEditingPatient] = useState<PatientData | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadPatients();
   }, []);
 
-  const loadPatients = () => {
-    const savedPatients = JSON.parse(localStorage.getItem('patients') || '[]');
-    setPatients(savedPatients);
+  const loadPatients = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        setError("Authentication required. Please log in.");
+        setLoading(false);
+        return;
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/patients`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch patients');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setPatients(data.data);
+      } else {
+        throw new Error(data.message || 'Failed to load patients');
+      }
+    } catch (error) {
+      console.error('Error loading patients:', error);
+      setError("Failed to load patients. Please try again.");
+      toast({
+        title: "Error",
+        description: "Failed to load patient records",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredPatients = useMemo(() => {
@@ -52,12 +93,46 @@ const DoctorDashboard = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleSavePatient = (updatedPatient: PatientData) => {
-    const updatedPatients = patients.map(p => 
-      p.id === updatedPatient.id ? updatedPatient : p
-    );
-    setPatients(updatedPatients);
-    localStorage.setItem('patients', JSON.stringify(updatedPatients));
+  const handleSavePatient = async (updatedPatient: PatientData) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      const response = await fetch(`${API_BASE_URL}/patients/${updatedPatient._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedPatient)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update patient');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update local state
+        setPatients(patients.map(p => 
+          p._id === updatedPatient._id ? data.data : p
+        ));
+        
+        toast({
+          title: "Patient Updated",
+          description: `${updatedPatient.patientName}'s record has been updated successfully`,
+        });
+      } else {
+        throw new Error(data.message || 'Failed to update patient');
+      }
+    } catch (error) {
+      console.error('Error updating patient:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update patient record",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDownloadPDF = async (patient: PatientData) => {
@@ -92,6 +167,27 @@ const DoctorDashboard = () => {
     }
     return patient.treatmentEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="text-center py-12">
+        <CardContent>
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Data</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={loadPatients}>Try Again</Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -143,7 +239,7 @@ const DoctorDashboard = () => {
           filteredPatients.map((patient) => {
             const latestTreatment = getLatestTreatment(patient);
             return (
-              <Card key={patient.id} className="hover:shadow-lg transition-shadow duration-200">
+              <Card key={patient._id} className="hover:shadow-lg transition-shadow duration-200">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
                     <div>
@@ -151,7 +247,7 @@ const DoctorDashboard = () => {
                       <div className="flex items-center space-x-4 text-sm text-gray-600">
                         <span className="flex items-center space-x-1">
                           <Calendar className="h-4 w-4" />
-                          <span>Created: {formatDate(patient.dateCreated)}</span>
+                          <span>Created: {formatDate(patient.createdAt)}</span>
                         </span>
                         <Badge variant="outline">{patient.referenceNumber}</Badge>
                         {patient.treatmentEntries && patient.treatmentEntries.length > 0 && (

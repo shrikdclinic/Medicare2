@@ -14,6 +14,7 @@ const DoctorLogin = ({ onLogin }: DoctorLoginProps) => {
   const [success, setSuccess] = useState("");
 
   // API Configuration - Replace with your backend URL
+  // const API_BASE_URL = 'https://medicare-th2c.onrender.com/api';
   const API_BASE_URL = 'http://localhost:3001/api';
 
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -105,7 +106,7 @@ const DoctorLogin = ({ onLogin }: DoctorLoginProps) => {
       await sendOtpToEmail(email);
       setStep('otp');
       showToast(`Verification code has been sent to ${email}`, 'success');
-    } catch (error: any) {
+    } catch (error) {
       showToast(error.message || "Failed to send verification code. Please try again.", 'error');
     } finally {
       setLoading(false);
@@ -141,7 +142,7 @@ const DoctorLogin = ({ onLogin }: DoctorLoginProps) => {
       setTimeout(() => {
         onLogin();
       }, 1500);
-    } catch (error: any) {
+    } catch (error) {
       showToast(error.message || "Invalid verification code. Please try again.", 'error');
     } finally {
       setLoading(false);
@@ -157,7 +158,7 @@ const DoctorLogin = ({ onLogin }: DoctorLoginProps) => {
     try {
       await sendOtpToEmail(email);
       showToast(`New verification code has been sent to ${email}`, 'success');
-    } catch (error: any) {
+    } catch (error) {
       showToast(error.message || "Failed to resend verification code. Please try again.", 'error');
     } finally {
       setLoading(false);
@@ -235,7 +236,7 @@ const DoctorLogin = ({ onLogin }: DoctorLoginProps) => {
                   disabled={loading}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      handleEmailSubmit(e as any);
+                      handleEmailSubmit(e);
                     }
                   }}
                 />
@@ -279,6 +280,7 @@ const DoctorLogin = ({ onLogin }: DoctorLoginProps) => {
                         id={`otp-${index}`}
                         type="text"
                         maxLength={1}
+                        placeholder="0"
                         value={otp[index] || ''}
                         onChange={(e) => handleOtpChange(index, e.target.value)}
                         onKeyDown={(e) => handleKeyDown(index, e)}
@@ -292,7 +294,7 @@ const DoctorLogin = ({ onLogin }: DoctorLoginProps) => {
 
               <div className="space-y-3">
                 <button 
-                  onClick={(e) => handleOtpSubmit(e as any)}
+                  onClick={(e) => handleOtpSubmit(e)}
                   className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   disabled={otp.length !== 6 || loading}
                 >

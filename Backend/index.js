@@ -4,10 +4,20 @@ const sgMail = require('@sendgrid/mail');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('MongoDB Connected'))
+  .catch(err => console.error('MongoDB Connection Error:', err));
+
+// Import models
+const User = require('./models/User');
+const Patient = require('./models/Patient');
 
 // Initialize SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -37,6 +47,25 @@ const generateOTP = () => {
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
+};
+
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Authentication required' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ success: false, message: 'Invalid or expired token' });
+    }
+    
+    req.user = decoded;
+    next();
+  });
 };
 
 // Send OTP using SendGrid
@@ -147,14 +176,16 @@ app.post('/api/auth/send-otp', otpLimiter, async (req, res) => {
       });
     }
 
-    // Optional: Validate if email exists in your user database
-    // const user = await User.findOne({ email, userType });
-    // if (!user) {
-    //   return res.status(404).json({
-    //     success: false,
-    //     message: 'Email not registered'
-    //   });
-    // }
+    // Check if email exists in database
+    const user = await User.findOne({ email });
+    
+    // If user doesn't exist, create one (you might want to change this behavior)
+    if (!user) {
+      await User.create({
+        email,
+        userType: userType || 'doctor'
+      });
+    }
 
     const otp = generateOTP();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
@@ -164,7 +195,7 @@ app.post('/api/auth/send-otp', otpLimiter, async (req, res) => {
       otp,
       expiresAt,
       attempts: 0,
-      userType: userType || 'user'
+      userType: userType || 'doctor'
     });
 
     // Send OTP via SendGrid
@@ -237,11 +268,26 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     // OTP is valid, remove from storage
     otpStorage.delete(email);
 
+    // Find or create user in database
+    let user = await User.findOne({ email });
+    
+    if (!user) {
+      user = await User.create({
+        email,
+        userType: userType || 'doctor'
+      });
+    }
+
+    // Update last login time
+    user.lastLogin = new Date();
+    await user.save();
+
     // Generate JWT token for authenticated session
     const token = jwt.sign(
       { 
-        email, 
-        userType: userType || 'doctor',
+        id: user._id,
+        email: user.email, 
+        userType: user.userType,
         loginTime: Date.now()
       },
       process.env.JWT_SECRET || 'your-secret-key',
@@ -253,8 +299,9 @@ app.post('/api/auth/verify-otp', async (req, res) => {
       message: 'Login successful',
       token,
       user: {
-        email,
-        userType: userType || 'doctor'
+        id: user._id,
+        email: user.email,
+        userType: user.userType
       }
     });
 
@@ -267,27 +314,191 @@ app.post('/api/auth/verify-otp', async (req, res) => {
   }
 });
 
-// Test email endpoint (for development)
-app.post('/api/test-email', async (req, res) => {
-  try {
-    const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
-    }
+// PATIENT ROUTES
 
-    await sendOtpEmail(email, '123456');
+// Get all patients for a doctor
+app.get('/api/patients', authenticateToken, async (req, res) => {
+  try {
+    const patients = await Patient.find({ doctor: req.user.id });
     
-    res.json({ 
-      success: true, 
-      message: 'Test email sent successfully' 
+    res.json({
+      success: true,
+      data: patients
     });
   } catch (error) {
-    console.error('Test email error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to send test email',
-      error: error.message 
+    console.error('Error fetching patients:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch patients'
+    });
+  }
+});
+
+// Create a new patient
+app.post('/api/patients', authenticateToken, async (req, res) => {
+  try {
+    const {
+      patientName,
+      age,
+      address,
+      referenceNumber,
+      referencePerson,
+      contactNumber,
+      patientProblem,
+      medicinePrescriptions,
+      advisories
+    } = req.body;
+
+    // Generate reference number if not provided
+    const refNumber = referenceNumber || `ID-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+
+    // Create initial treatment entry if prescriptions or advisories are provided
+    const treatmentEntries = [];
+    if (medicinePrescriptions || advisories) {
+      treatmentEntries.push({
+        date: new Date(),
+        medicinePrescriptions,
+        advisories,
+      });
+    }
+
+    const newPatient = await Patient.create({
+      patientName,
+      age,
+      address,
+      referenceNumber: refNumber,
+      referencePerson,
+      contactNumber,
+      patientProblem,
+      doctor: req.user.id,
+      treatmentEntries
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Patient created successfully',
+      data: newPatient
+    });
+  } catch (error) {
+    console.error('Error creating patient:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create patient',
+      error: error.message
+    });
+  }
+});
+
+// Get a single patient by ID
+app.get('/api/patients/:id', authenticateToken, async (req, res) => {
+  try {
+    const patient = await Patient.findOne({
+      _id: req.params.id,
+      doctor: req.user.id
+    });
+
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: patient
+    });
+  } catch (error) {
+    console.error('Error fetching patient:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch patient'
+    });
+  }
+});
+
+// Update a patient
+app.put('/api/patients/:id', authenticateToken, async (req, res) => {
+  try {
+    const {
+      patientName,
+      age,
+      address,
+      referenceNumber,
+      referencePerson,
+      contactNumber,
+      patientProblem,
+      treatmentEntries
+    } = req.body;
+
+    // Find patient and verify ownership
+    const patient = await Patient.findOne({
+      _id: req.params.id,
+      doctor: req.user.id
+    });
+
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient not found or you do not have permission to update'
+      });
+    }
+
+    // Update patient
+    patient.patientName = patientName || patient.patientName;
+    patient.age = age || patient.age;
+    patient.address = address !== undefined ? address : patient.address;
+    patient.referenceNumber = referenceNumber || patient.referenceNumber;
+    patient.referencePerson = referencePerson !== undefined ? referencePerson : patient.referencePerson;
+    patient.contactNumber = contactNumber || patient.contactNumber;
+    patient.patientProblem = patientProblem !== undefined ? patientProblem : patient.patientProblem;
+    
+    // Handle treatment entries update if provided
+    if (treatmentEntries) {
+      patient.treatmentEntries = treatmentEntries;
+    }
+
+    await patient.save();
+
+    res.json({
+      success: true,
+      message: 'Patient updated successfully',
+      data: patient
+    });
+  } catch (error) {
+    console.error('Error updating patient:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update patient',
+      error: error.message
+    });
+  }
+});
+
+// Delete a patient
+app.delete('/api/patients/:id', authenticateToken, async (req, res) => {
+  try {
+    const patient = await Patient.findOneAndDelete({
+      _id: req.params.id,
+      doctor: req.user.id
+    });
+
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient not found or you do not have permission to delete'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Patient deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting patient:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete patient'
     });
   }
 });
@@ -310,6 +521,7 @@ setInterval(() => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log('SendGrid configured:', !!process.env.SENDGRID_API_KEY);
+  console.log('MongoDB configured:', !!process.env.MONGODB_URI);
 });
 
 module.exports = app;
