@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Save, User, MapPin, Phone, Hash, Pill, FileText, UserCheck, ClipboardList } from "lucide-react";
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'https://medicare-th2c.onrender.com/api';
 
 const PatientForm = () => {
   const { toast } = useToast();
