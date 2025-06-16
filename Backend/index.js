@@ -164,6 +164,11 @@ const sendOtpEmail = async (email, otp) => {
   }
 };
 
+// Simple GET route
+app.get('/', (req, res) => {
+  res.send('Welcome to the backend of MediCare Clinic!');
+});
+
 // Send OTP endpoint
 app.post('/api/auth/send-otp', otpLimiter, async (req, res) => {
   try {
