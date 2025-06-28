@@ -15,7 +15,7 @@ const DoctorLogin = ({ onLogin }: DoctorLoginProps) => {
 
   // API Configuration - Replace with your backend URL
   // const API_BASE_URL = 'https://medicare-th2c.onrender.com/api';
-  const API_BASE_URL = 'https://medicare-th2c.onrender.com/api';
+  const API_BASE_URL = 'https://medicare-z4js.onrender.com/api';
 
   const showToast = (message: string, type: 'success' | 'error') => {
     if (type === 'success') {
