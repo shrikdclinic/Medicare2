@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { PatientData } from '@/types/patient';
+import logo from '@/assets/nobglogo.png'; // Adjust the path as necessary
 
 export const generatePDF = async (patient: PatientData) => {
   const pdf = new jsPDF();
@@ -28,20 +29,7 @@ export const generatePDF = async (patient: PatientData) => {
   pdf.setFillColor(headerBlue[0], headerBlue[1], headerBlue[2]);
   pdf.rect(0, 0, 210, headerHeight, 'F');
   
-  // Logo circle (left side)
-  pdf.setFillColor(255, 255, 255);
-  pdf.circle(25, 20, 12, 'F');
-  
-  // Medical cross in logo
-  pdf.setFillColor(headerBlue[0], headerBlue[1], headerBlue[2]);
-  pdf.rect(23, 16, 4, 8, 'F'); // Vertical line
-  pdf.rect(21, 18, 8, 4, 'F'); // Horizontal line
-  
-  // Add "KD" text in logo
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(8);
-  pdf.setTextColor(headerBlue[0], headerBlue[1], headerBlue[2]);
-  pdf.text('KD', 22, 26);
+ pdf.addImage(logo, 'PNG', 10, 10, 30, 30); // Adjust logo size and position as needed
   
   // Clinic name and details
   pdf.setFont('helvetica', 'bold');
@@ -77,7 +65,7 @@ export const generatePDF = async (patient: PatientData) => {
   pdf.setFontSize(9);
   pdf.text('Id : ' + (patient.referenceNumber || '01'), 22, yPosition + 8);
   
-  const formattedDate = new Date(patient.dateCreated).toLocaleDateString('en-GB', {
+  const formattedDate = new Date(patient.createdAt).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric'

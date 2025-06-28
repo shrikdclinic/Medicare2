@@ -7,6 +7,7 @@ import { Stethoscope, FileText, Users, LogOut } from "lucide-react";
 import PatientForm from "@/components/PatientForm";
 import DoctorDashboard from "@/components/DoctorDashboard";
 import DoctorLogin from "@/components/DoctorLogin";
+import logo from "@/assets/logo.png"; // Adjust the path as necessary
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("form");
@@ -82,12 +83,15 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <Stethoscope className="h-6 w-6 text-white" />
-              </div>
+              <img
+              src={logo}
+              alt="Clinic Logo"
+              className="h-12 w-12 rounded-full object-cover"
+
+            />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">MediCare Clinic</h1>
-                <p className="text-sm text-gray-600">Patient Management System</p>
+                <h1 className="text-xl font-bold text-gray-900">KD HomeoPathic Clinic</h1>
+                <p className="text-sm text-gray-600">Clinic and Pharmacy</p>
               </div>
             </div>
             <Button

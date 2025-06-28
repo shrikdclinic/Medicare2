@@ -120,6 +120,21 @@ const PatientForm = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* ID (formerly Reference Number) */}
+        <div className="space-y-2">
+          <Label htmlFor="referenceNumber" className="flex items-center space-x-2">
+            <Hash className="h-4 w-4 text-blue-600" />
+            <span>ID</span>
+          </Label>
+          <Input
+            id="referenceNumber"
+            name="referenceNumber"
+            value={formData.referenceNumber}
+            onChange={handleInputChange}
+            placeholder="Auto-generated if left empty"
+            className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
         {/* Patient Name */}
         <div className="space-y-2">
           <Label htmlFor="patientName" className="flex items-center space-x-2">
@@ -174,21 +189,7 @@ const PatientForm = () => {
           />
         </div>
 
-        {/* ID (formerly Reference Number) */}
-        <div className="space-y-2">
-          <Label htmlFor="referenceNumber" className="flex items-center space-x-2">
-            <Hash className="h-4 w-4 text-blue-600" />
-            <span>ID</span>
-          </Label>
-          <Input
-            id="referenceNumber"
-            name="referenceNumber"
-            value={formData.referenceNumber}
-            onChange={handleInputChange}
-            placeholder="Auto-generated if left empty"
-            className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+        
 
         {/* Reference Person */}
         <div className="space-y-2 md:col-span-2">

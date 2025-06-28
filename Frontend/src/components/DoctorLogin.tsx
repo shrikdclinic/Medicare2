@@ -91,29 +91,32 @@ const DoctorLogin = ({ onLogin }: DoctorLoginProps) => {
     }
   };
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      showToast("Please enter a valid email address", 'error');
-      return;
-    }
+const handleEmailSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    setLoading(true);
-    setError("");
-    setSuccess("");
-    
-    try {
-      await sendOtpToEmail(email);
-      setStep('otp');
-      showToast(`Verification code has been sent to ${email}`, 'success');
-    } catch (error) {
-      showToast(error.message || "Failed to send verification code. Please try again.", 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const allowedEmail = import.meta.env.VITE_ALLOWED_EMAIL;
+
+  if (!allowedEmail || email.trim().toLowerCase() !== allowedEmail.toLowerCase()) {
+    showToast("Invalid email address. Only the authorized email is allowed.", 'error');
+    return;
+  }
+
+  setLoading(true);
+  setError("");
+  setSuccess("");
+  
+  try {
+    await sendOtpToEmail(email);
+    setStep('otp');
+    showToast(`Verification code has been sent to ${email}`, 'success');
+  } catch (error: any) {
+    showToast(error.message || "Failed to send verification code. Please try again.", 'error');
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
