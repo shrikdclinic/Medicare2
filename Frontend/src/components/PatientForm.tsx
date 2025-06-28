@@ -7,7 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Save, User, MapPin, Phone, Hash, Pill, FileText, UserCheck, ClipboardList } from "lucide-react";
 
-const API_BASE_URL = 'https://medicare-z4js.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
 const PatientForm = () => {
   const { toast } = useToast();

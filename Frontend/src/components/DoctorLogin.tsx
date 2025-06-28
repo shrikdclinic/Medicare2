@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Stethoscope, Mail, Shield, ArrowLeft, AlertCircle, CheckCircle } from "lucide-react";
+import logo from '../assets/logo.png'; // Adjust the path as necessary
 
 interface DoctorLoginProps {
   onLogin: () => void;
@@ -15,7 +16,8 @@ const DoctorLogin = ({ onLogin }: DoctorLoginProps) => {
 
   // API Configuration - Replace with your backend URL
   // const API_BASE_URL = 'https://medicare-th2c.onrender.com/api';
-  const API_BASE_URL = 'https://medicare-z4js.onrender.com/api';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
   const showToast = (message: string, type: 'success' | 'error') => {
     if (type === 'success') {
@@ -191,12 +193,20 @@ const DoctorLogin = ({ onLogin }: DoctorLoginProps) => {
       <div className="w-full max-w-md bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20">
         {/* Header */}
         <div className="text-center p-8 pb-6">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 rounded-xl w-fit mx-auto mb-4 shadow-lg">
-            <Stethoscope className="h-8 w-8 text-white" />
+          <div className=" w-fit mx-auto mb-4 ">
+            <img
+              src={logo}
+              alt="Clinic Logo"
+              className="h-20 w-20 rounded-full object-cover"
+
+            />
           </div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            MediCare Clinic
+            K D HomeoPathic
           </h1>
+          <h4 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Clinic And Pharmacy
+          </h4>
           <p className="text-gray-600 mt-2">
             Secure access to Patient Management System
           </p>

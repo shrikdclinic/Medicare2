@@ -10,7 +10,8 @@ import { generatePDF } from "@/utils/pdfGenerator";
 import { PatientData } from "@/types/patient";
 import EditPatientModal from "@/components/EditPatientModal";
 
-const API_BASE_URL ='https://medicare-z4js.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
 const DoctorDashboard = () => {
   const { toast } = useToast();
