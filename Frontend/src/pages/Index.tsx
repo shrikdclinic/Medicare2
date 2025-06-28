@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +11,54 @@ import DoctorLogin from "@/components/DoctorLogin";
 const Index = () => {
   const [activeTab, setActiveTab] = useState("form");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const storage = {
+  setItem: (key, value) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  },
+  getItem: (key) => {
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      console.error('Error reading from localStorage:', error);
+      return null;
+    }
+  },
+  removeItem: (key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error('Error removing from localStorage:', error);
+    }
+  }
+};
+
+// Check for existing authentication on component mount
+  useEffect(() => {
+    const authStatus = storage.getItem('isAuthenticated');
+    const savedTab = storage.getItem('activeTab');
+    
+    if (authStatus === 'true') {
+      setIsLoggedIn(true);
+    }
+    
+    if (savedTab) {
+      setActiveTab(savedTab);
+    }
+  }, []);
+
+  // Save authentication status whenever it changes
+  useEffect(() => {
+    storage.setItem('isAuthenticated', isLoggedIn.toString());
+  }, [isLoggedIn]);
+
+  // Save active tab whenever it changes
+  useEffect(() => {
+    storage.setItem('activeTab', activeTab);
+  }, [activeTab]);
 
   const handleLogin = () => {
     setIsLoggedIn(true);
@@ -19,6 +67,8 @@ const Index = () => {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setActiveTab("form");
+    storage.removeItem('isAuthenticated');
+    storage.removeItem('activeTab');
   };
 
   if (!isLoggedIn) {
