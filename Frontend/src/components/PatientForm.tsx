@@ -19,25 +19,87 @@ const PatientForm = () => {
     referenceNumber: "",
     referencePerson: "",
     contactNumber: "",
-    patientProblem: "",
-    medicinePrescriptions: "",
-    advisories: "",
+     patientProblem: "1. ",
+    medicinePrescriptions: "1. ",
+    advisories: "1. ",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const { name, value } = e.target;
+  setFormData(prev => ({
+    ...prev,
+    [name]: value
+  }));
+};
+
+const handleProblemKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  if (e.key === 'Enter') {
+    e.preventDefault(); // prevent default newline
+
+    const value = formData.patientProblem;
+    const lines = value.split('\n');
+    const lastLine = lines[lines.length - 1];
+    
+    // If last line starts with a number, count next
+    const match = lastLine.match(/^(\d+)\./);
+    const nextNumber = match ? parseInt(match[1], 10) + 1 : lines.length + 1;
+
+    const updatedValue = value + `\n${nextNumber}. `;
+
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      patientProblem: updatedValue,
     }));
-  };
+  }
+};
+const handleProblemKeyDown2 = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  if (e.key === 'Enter') {
+    e.preventDefault(); // prevent default newline
+
+    const value = formData.medicinePrescriptions;
+    const lines = value.split('\n');
+    const lastLine = lines[lines.length - 1];
+    
+    // If last line starts with a number, count next
+    const match = lastLine.match(/^(\d+)\./);
+    const nextNumber = match ? parseInt(match[1], 10) + 1 : lines.length + 1;
+
+    const updatedValue2 = value + `\n${nextNumber}. `;
+
+    setFormData(prev => ({
+      ...prev,
+      medicinePrescriptions: updatedValue2,
+    }));
+  }
+};
+const handleProblemKeyDown3 = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  if (e.key === 'Enter') {
+    e.preventDefault(); // prevent default newline
+
+    const value = formData.advisories;
+    const lines = value.split('\n');
+    const lastLine = lines[lines.length - 1];
+    
+    // If last line starts with a number, count next
+    const match = lastLine.match(/^(\d+)\./);
+    const nextNumber = match ? parseInt(match[1], 10) + 1 : lines.length + 1;
+
+    const updatedValue3 = value + `\n${nextNumber}. `;
+
+    setFormData(prev => ({
+      ...prev,
+      advisories: updatedValue3,
+    }));
+  }
+};
+
 
   const generateReferenceNumber = () => {
     const timestamp = Date.now().toString().slice(-6);
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `ID-${timestamp}-${random}`;
+    return `SKD-${timestamp}-${random}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -229,20 +291,21 @@ const PatientForm = () => {
 
       {/* Patient Problem */}
       <div className="space-y-2">
-        <Label htmlFor="patientProblem" className="flex items-center space-x-2">
-          <ClipboardList className="h-4 w-4 text-blue-600" />
-          <span>Patient's Problem/Symptoms</span>
-        </Label>
-        <Textarea
-          id="patientProblem"
-          name="patientProblem"
-          value={formData.patientProblem}
-          onChange={handleInputChange}
-          placeholder="Describe the patient's current health problem or symptoms"
-          rows={4}
-          className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+  <Label htmlFor="patientProblem" className="flex items-center space-x-2">
+    <ClipboardList className="h-4 w-4 text-blue-600" />
+    <span>Patient's Problem/Symptoms</span>
+  </Label>
+      <Textarea
+  id="patientProblem"
+  name="patientProblem"
+  value={formData.patientProblem}
+  onChange={handleInputChange}
+  onKeyDown={handleProblemKeyDown}
+  placeholder="Describe the patient's current health problem or symptoms"
+  rows={4}
+  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+/>
+</div>
 
       {/* Medicine Prescriptions */}
       <div className="space-y-2">
@@ -255,6 +318,7 @@ const PatientForm = () => {
           name="medicinePrescriptions"
           value={formData.medicinePrescriptions}
           onChange={handleInputChange}
+          onKeyDown={handleProblemKeyDown2}
           placeholder="List prescribed medicines, dosages, and instructions"
           rows={5}
           className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
@@ -272,6 +336,7 @@ const PatientForm = () => {
           name="advisories"
           value={formData.advisories}
           onChange={handleInputChange}
+          onKeyDown={handleProblemKeyDown3}
           placeholder="Enter any medical advisories or recommendations for the patient"
           rows={4}
           className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"

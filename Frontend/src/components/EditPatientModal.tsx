@@ -284,8 +284,8 @@ const EditPatientModal = ({ patient, isOpen, onClose, onSave }: EditPatientModal
                 />
               </div>
 
-              <div>
-                <Label htmlFor="new-notes">Additional Notes</Label>
+              {/* <div>
+                <Label htmlFor="new-notes">Additional Notess</Label>
                 <Textarea
                   id="new-notes"
                   value={newTreatmentEntry.notes}
@@ -293,7 +293,7 @@ const EditPatientModal = ({ patient, isOpen, onClose, onSave }: EditPatientModal
                   placeholder="Any additional notes for this visit"
                   rows={2}
                 />
-              </div>
+              </div> */}
 
               <Button onClick={handleAddTreatmentEntry} className="w-full" type="button">
                 <Plus className="h-4 w-4 mr-2" />
