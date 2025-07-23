@@ -31,7 +31,7 @@ const patientSchema = new Schema(
       type: String,
       trim: true,
     },
-    height: {
+    bp: {
       type: String,
       trim: true,
     },

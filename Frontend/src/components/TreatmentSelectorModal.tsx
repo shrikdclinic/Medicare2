@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,8 +27,12 @@ const TreatmentSelectorModal: React.FC<TreatmentSelectorModalProps> = ({
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTreatmentId, setSelectedTreatmentId] = useState<string>("");
-  const [downloadMode, setDownloadMode] = useState<"single" | "multiple">("single");
-  const [selectedTreatmentIds, setSelectedTreatmentIds] = useState<string[]>([]);
+  const [downloadMode, setDownloadMode] = useState<"single" | "multiple">(
+    "single"
+  );
+  const [selectedTreatmentIds, setSelectedTreatmentIds] = useState<string[]>(
+    []
+  );
 
   const handleDownloadPDF = async () => {
     if (downloadMode === "single") {
@@ -75,10 +85,10 @@ const TreatmentSelectorModal: React.FC<TreatmentSelectorModalProps> = ({
         return;
       }
 
-      const selectedTreatments = patient.treatmentEntries?.filter(
-        (treatment, index) => 
+      const selectedTreatments =
+        patient.treatmentEntries?.filter((treatment, index) =>
           selectedTreatmentIds.includes(treatment._id || `treatment-${index}`)
-      ) || [];
+        ) || [];
 
       if (selectedTreatments.length === 0) {
         toast({
@@ -109,17 +119,20 @@ const TreatmentSelectorModal: React.FC<TreatmentSelectorModalProps> = ({
 
   const handleTreatmentToggle = (treatmentId: string, checked: boolean) => {
     if (checked) {
-      setSelectedTreatmentIds(prev => [...prev, treatmentId]);
+      setSelectedTreatmentIds((prev) => [...prev, treatmentId]);
     } else {
-      setSelectedTreatmentIds(prev => prev.filter(id => id !== treatmentId));
+      setSelectedTreatmentIds((prev) =>
+        prev.filter((id) => id !== treatmentId)
+      );
     }
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIds = patient.treatmentEntries?.map((treatment, index) => 
-        treatment._id || `treatment-${index}`
-      ) || [];
+      const allIds =
+        patient.treatmentEntries?.map(
+          (treatment, index) => treatment._id || `treatment-${index}`
+        ) || [];
       setSelectedTreatmentIds(allIds);
     } else {
       setSelectedTreatmentIds([]);
@@ -205,10 +218,15 @@ const TreatmentSelectorModal: React.FC<TreatmentSelectorModalProps> = ({
                   name="downloadMode"
                   value="single"
                   checked={downloadMode === "single"}
-                  onChange={(e) => setDownloadMode(e.target.value as "single" | "multiple")}
+                  onChange={(e) =>
+                    setDownloadMode(e.target.value as "single" | "multiple")
+                  }
                   className="h-4 w-4 text-blue-600"
                 />
-                <Label htmlFor="single-mode" className="flex items-center space-x-2 cursor-pointer">
+                <Label
+                  htmlFor="single-mode"
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
                   <FileText className="h-4 w-4 text-blue-600" />
                   <span>Single Visit Report</span>
                 </Label>
@@ -220,18 +238,23 @@ const TreatmentSelectorModal: React.FC<TreatmentSelectorModalProps> = ({
                   name="downloadMode"
                   value="multiple"
                   checked={downloadMode === "multiple"}
-                  onChange={(e) => setDownloadMode(e.target.value as "single" | "multiple")}
+                  onChange={(e) =>
+                    setDownloadMode(e.target.value as "single" | "multiple")
+                  }
                   className="h-4 w-4 text-blue-600"
                 />
-                <Label htmlFor="multiple-mode" className="flex items-center space-x-2 cursor-pointer">
+                <Label
+                  htmlFor="multiple-mode"
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
                   <FileStack className="h-4 w-4 text-green-600" />
                   <span>Multi-Visit Report</span>
                 </Label>
               </div>
             </div>
             <p className="text-xs text-gray-500">
-              {downloadMode === "single" 
-                ? "Download a single visit report" 
+              {downloadMode === "single"
+                ? "Download a single visit report"
                 : "Download multiple visits in one PDF (each visit on a separate page)"}
             </p>
           </div>
@@ -251,97 +274,109 @@ const TreatmentSelectorModal: React.FC<TreatmentSelectorModalProps> = ({
                 .map((treatment, index) => {
                   const treatmentId = treatment._id || `treatment-${index}`;
                   return (
-                    <div key={treatmentId} className="flex items-start space-x-3">
-                    <RadioGroupItem
-                      value={treatmentId}
-                      id={treatmentId}
-                      className="mt-4"
-                    />
-                    <Label
-                      htmlFor={treatmentId}
-                      className="flex-1 cursor-pointer"
+                    <div
+                      key={treatmentId}
+                      className="flex items-start space-x-3"
                     >
-                      <Card className="hover:bg-gray-50 transition-colors">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-2">
-                              <Calendar className="h-4 w-4 text-blue-600" />
-                              <span className="font-medium">
-                                Visit {patient.treatmentEntries.length - index}
-                              </span>
-                              {index === 0 && (
-                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                  Latest
+                      <RadioGroupItem
+                        value={treatmentId}
+                        id={treatmentId}
+                        className="mt-4"
+                      />
+                      <Label
+                        htmlFor={treatmentId}
+                        className="flex-1 cursor-pointer"
+                      >
+                        <Card className="hover:bg-gray-50 transition-colors">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-2">
+                                <Calendar className="h-4 w-4 text-blue-600" />
+                                <span className="font-medium">
+                                  Visit{" "}
+                                  {patient.treatmentEntries.length - index}
                                 </span>
+                                {index === 0 && (
+                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                    Latest
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-sm text-gray-600">
+                                {new Date(treatment.date).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}
+                              </span>
+                            </div>
+
+                            <div className="space-y-2 text-sm">
+                              {treatment.medicinePrescriptions && (
+                                <div className="flex items-start space-x-2">
+                                  <Pill className="h-3 w-3 text-green-600 mt-1 flex-shrink-0" />
+                                  <div className="flex-1">
+                                    <p className="text-gray-700 font-medium">
+                                      Prescriptions:
+                                    </p>
+                                    <p className="text-gray-600 line-clamp-2">
+                                      {treatment.medicinePrescriptions}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+
+                              {treatment.advisories && (
+                                <div className="flex items-start space-x-2">
+                                  <FileText className="h-3 w-3 text-blue-600 mt-1 flex-shrink-0" />
+                                  <div className="flex-1">
+                                    <p className="text-gray-700 font-medium">
+                                      Advisories:
+                                    </p>
+                                    <p className="text-gray-600 line-clamp-2">
+                                      {treatment.advisories}
+                                    </p>
+                                  </div>
+                                </div>
                               )}
                             </div>
-                            <span className="text-sm text-gray-600">
-                              {new Date(treatment.date).toLocaleDateString(
-                                "en-US",
-                                {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )}
-                            </span>
-                          </div>
-
-                          <div className="space-y-2 text-sm">
-                            {treatment.medicinePrescriptions && (
-                              <div className="flex items-start space-x-2">
-                                <Pill className="h-3 w-3 text-green-600 mt-1 flex-shrink-0" />
-                                <div className="flex-1">
-                                  <p className="text-gray-700 font-medium">
-                                    Prescriptions:
-                                  </p>
-                                  <p className="text-gray-600 line-clamp-2">
-                                    {treatment.medicinePrescriptions}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-
-                            {treatment.advisories && (
-                              <div className="flex items-start space-x-2">
-                                <FileText className="h-3 w-3 text-blue-600 mt-1 flex-shrink-0" />
-                                <div className="flex-1">
-                                  <p className="text-gray-700 font-medium">
-                                    Advisories:
-                                  </p>
-                                  <p className="text-gray-600 line-clamp-2">
-                                    {treatment.advisories}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Label>
-                  </div>
-                );
-              })}
+                          </CardContent>
+                        </Card>
+                      </Label>
+                    </div>
+                  );
+                })}
             </RadioGroup>
           ) : (
             /* Multiple visits mode */
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium text-gray-900">Select visits to include in the report:</h4>
+                <h4 className="font-medium text-gray-900">
+                  Select visits to include in the report:
+                </h4>
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="select-all"
-                    checked={selectedTreatmentIds.length === patient.treatmentEntries?.length}
+                    checked={
+                      selectedTreatmentIds.length ===
+                      patient.treatmentEntries?.length
+                    }
                     onCheckedChange={handleSelectAll}
                   />
-                  <Label htmlFor="select-all" className="text-sm cursor-pointer">
+                  <Label
+                    htmlFor="select-all"
+                    className="text-sm cursor-pointer"
+                  >
                     Select All
                   </Label>
                 </div>
               </div>
-              
+
               <div className="space-y-3 max-h-60 overflow-y-auto">
                 {patient.treatmentEntries
                   ?.sort(
@@ -351,23 +386,33 @@ const TreatmentSelectorModal: React.FC<TreatmentSelectorModalProps> = ({
                   .map((treatment, index) => {
                     const treatmentId = treatment._id || `treatment-${index}`;
                     return (
-                      <div key={treatmentId} className="flex items-start space-x-3">
+                      <div
+                        key={treatmentId}
+                        className="flex items-start space-x-3"
+                      >
                         <Checkbox
                           id={`checkbox-${treatmentId}`}
                           checked={selectedTreatmentIds.includes(treatmentId)}
-                          onCheckedChange={(checked) => 
-                            handleTreatmentToggle(treatmentId, checked as boolean)
+                          onCheckedChange={(checked) =>
+                            handleTreatmentToggle(
+                              treatmentId,
+                              checked as boolean
+                            )
                           }
                           className="mt-4"
                         />
-                        <Label htmlFor={`checkbox-${treatmentId}`} className="flex-1 cursor-pointer">
+                        <Label
+                          htmlFor={`checkbox-${treatmentId}`}
+                          className="flex-1 cursor-pointer"
+                        >
                           <Card className="hover:bg-gray-50 transition-colors">
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center space-x-2">
                                   <Calendar className="h-4 w-4 text-blue-600" />
                                   <span className="font-medium">
-                                    Visit {patient.treatmentEntries.length - index}
+                                    Visit{" "}
+                                    {patient.treatmentEntries.length - index}
                                   </span>
                                   {index === 0 && (
                                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
@@ -435,16 +480,18 @@ const TreatmentSelectorModal: React.FC<TreatmentSelectorModalProps> = ({
             <Button
               onClick={handleDownloadPDF}
               disabled={
-                downloadMode === "single" 
-                  ? !selectedTreatmentId 
+                downloadMode === "single"
+                  ? !selectedTreatmentId
                   : selectedTreatmentIds.length === 0
               }
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Download className="h-4 w-4 mr-2" />
-              {downloadMode === "single" 
-                ? "Download PDF" 
-                : `Download ${selectedTreatmentIds.length} Visit${selectedTreatmentIds.length !== 1 ? 's' : ''} PDF`}
+              {downloadMode === "single"
+                ? "Download PDF"
+                : `Download ${selectedTreatmentIds.length} Visit${
+                    selectedTreatmentIds.length !== 1 ? "s" : ""
+                  } PDF`}
             </Button>
           </div>
         </div>

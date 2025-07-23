@@ -362,7 +362,7 @@ app.post("/api/patients", authenticateToken, async (req, res) => {
       patientName,
       age,
       weight,
-      height,
+      bp,
       rbs,
       address,
       referenceNumber,
@@ -394,7 +394,7 @@ app.post("/api/patients", authenticateToken, async (req, res) => {
       patientName,
       age,
       weight,
-      height,
+      bp,
       rbs,
       address,
       referenceNumber: refNumber,
@@ -455,7 +455,7 @@ app.put("/api/patients/:id", authenticateToken, async (req, res) => {
       patientName,
       age,
       weight,
-      height,
+      bp,
       rbs,
       address,
       referenceNumber,
@@ -482,7 +482,7 @@ app.put("/api/patients/:id", authenticateToken, async (req, res) => {
     patient.patientName = patientName || patient.patientName;
     patient.age = age || patient.age;
     patient.weight = weight !== undefined ? weight : patient.weight;
-    patient.height = height !== undefined ? height : patient.height;
+    patient.bp = bp !== undefined ? bp : patient.bp;
     patient.rbs = rbs !== undefined ? rbs : patient.rbs;
     patient.address = address !== undefined ? address : patient.address;
     patient.referenceNumber = referenceNumber || patient.referenceNumber;
@@ -548,7 +548,7 @@ app.post(
   authenticateToken,
   async (req, res) => {
     try {
-      const { medicinePrescriptions, advisories, notes, weight, height, rbs } =
+      const { medicinePrescriptions, advisories, notes, weight, bp, rbs } =
         req.body;
 
       // Find patient and verify ownership
@@ -575,7 +575,7 @@ app.post(
 
       // Update vital signs if provided
       if (weight !== undefined) patient.weight = weight;
-      if (height !== undefined) patient.height = height;
+      if (bp !== undefined) patient.bp = bp;
       if (rbs !== undefined) patient.rbs = rbs;
 
       // Add treatment entry

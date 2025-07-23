@@ -16,7 +16,7 @@ import {
   UserCheck,
   ClipboardList,
   Scale,
-  Ruler,
+  Heart,
   Activity,
 } from "lucide-react";
 
@@ -28,7 +28,7 @@ const PatientForm = () => {
     patientName: "",
     age: "",
     weight: "",
-    height: "",
+    bp: "",
     rbs: "",
     address: "",
     referenceNumber: "",
@@ -185,7 +185,7 @@ const PatientForm = () => {
         patientName: "",
         age: "",
         weight: "",
-        height: "",
+        bp: "",
         rbs: "",
         address: "",
         referenceNumber: "",
@@ -281,18 +281,18 @@ const PatientForm = () => {
           />
         </div>
 
-        {/* Height */}
+        {/* BP */}
         <div className="space-y-2">
-          <Label htmlFor="height" className="flex items-center space-x-2">
-            <Ruler className="h-4 w-4 text-blue-600" />
-            <span>Height (ft/cm)</span>
+          <Label htmlFor="bp" className="flex items-center space-x-2">
+            <Heart className="h-4 w-4 text-blue-600" />
+            <span>BP (mmHg)</span>
           </Label>
           <Input
-            id="height"
-            name="height"
-            value={formData.height}
+            id="bp"
+            name="bp"
+            value={formData.bp}
             onChange={handleInputChange}
-            placeholder="Enter height (e.g., 5'6&quot; or 170cm)"
+            placeholder="Enter blood pressure (e.g., 120/80)"
             className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
           />
         </div>
