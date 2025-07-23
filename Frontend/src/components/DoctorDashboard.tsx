@@ -4,20 +4,33 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Search, Download, Calendar, User, Phone, MapPin, Pill, FileText, Edit, AlertCircle } from "lucide-react";
+import {
+  Search,
+  Calendar,
+  User,
+  Phone,
+  MapPin,
+  Pill,
+  FileText,
+  Edit,
+  AlertCircle,
+  History,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { generatePDF } from "@/utils/pdfGenerator";
 import { PatientData } from "@/types/patient";
 import EditPatientModal from "@/components/EditPatientModal";
+import AddTreatmentModal from "@/components/AddTreatmentModal";
+import TreatmentSelectorModal from "@/components/TreatmentSelectorModal";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 
 const DoctorDashboard = () => {
   const { toast } = useToast();
   const [patients, setPatients] = useState<PatientData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingPatient, setEditingPatient] = useState<PatientData | null>(null);
+  const [editingPatient, setEditingPatient] = useState<PatientData | null>(
+    null
+  );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -30,34 +43,34 @@ const DoctorDashboard = () => {
     try {
       setLoading(true);
       setError("");
-      
-      const token = localStorage.getItem('authToken');
-      
+
+      const token = localStorage.getItem("authToken");
+
       if (!token) {
         setError("Authentication required. Please log in.");
         setLoading(false);
         return;
       }
-      
+
       const response = await fetch(`${API_BASE_URL}/patients`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to fetch patients');
+        throw new Error("Failed to fetch patients");
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         setPatients(data.data);
       } else {
-        throw new Error(data.message || 'Failed to load patients');
+        throw new Error(data.message || "Failed to load patients");
       }
     } catch (error) {
-      console.error('Error loading patients:', error);
+      console.error("Error loading patients:", error);
       setError("Failed to load patients. Please try again.");
       toast({
         title: "Error",
@@ -71,16 +84,18 @@ const DoctorDashboard = () => {
 
   const filteredPatients = useMemo(() => {
     if (!searchTerm) return patients;
-    
-    return patients.filter(patient =>
-      Object.values(patient).some(value => {
-        if (typeof value === 'string') {
+
+    return patients.filter((patient) =>
+      Object.values(patient).some((value) => {
+        if (typeof value === "string") {
           return value.toLowerCase().includes(searchTerm.toLowerCase());
         }
         if (Array.isArray(value)) {
-          return value.some(entry => 
-            Object.values(entry).some(entryValue => 
-              typeof entryValue === 'string' && entryValue.toLowerCase().includes(searchTerm.toLowerCase())
+          return value.some((entry) =>
+            Object.values(entry).some(
+              (entryValue) =>
+                typeof entryValue === "string" &&
+                entryValue.toLowerCase().includes(searchTerm.toLowerCase())
             )
           );
         }
@@ -96,38 +111,41 @@ const DoctorDashboard = () => {
 
   const handleSavePatient = async (updatedPatient: PatientData) => {
     try {
-      const token = localStorage.getItem('authToken');
-      
-      const response = await fetch(`${API_BASE_URL}/patients/${updatedPatient._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updatedPatient)
-      });
-      
+      const token = localStorage.getItem("authToken");
+
+      const response = await fetch(
+        `${API_BASE_URL}/patients/${updatedPatient._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedPatient),
+        }
+      );
+
       if (!response.ok) {
-        throw new Error('Failed to update patient');
+        throw new Error("Failed to update patient");
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         // Update local state
-        setPatients(patients.map(p => 
-          p._id === updatedPatient._id ? data.data : p
-        ));
-        
+        setPatients(
+          patients.map((p) => (p._id === updatedPatient._id ? data.data : p))
+        );
+
         toast({
           title: "Patient Updated",
           description: `${updatedPatient.patientName}'s record has been updated successfully`,
         });
       } else {
-        throw new Error(data.message || 'Failed to update patient');
+        throw new Error(data.message || "Failed to update patient");
       }
     } catch (error) {
-      console.error('Error updating patient:', error);
+      console.error("Error updating patient:", error);
       toast({
         title: "Update Failed",
         description: "Failed to update patient record",
@@ -136,59 +154,14 @@ const DoctorDashboard = () => {
     }
   };
 
-  const handleDownloadPDF = async (patient: PatientData) => {
-    // 1. Find the most recent treatment entry.
-    const latestTreatment = getLatestTreatment(patient);
-
-    // 2. Check if a treatment entry exists before generating the PDF.
-    if (!latestTreatment) {
-      toast({
-        title: "Cannot Generate PDF",
-        description: "This patient does not have any treatment records yet.",
-        variant: "destructive",
-      });
-      return; // Stop the function if no treatment is found
-    }
-
-    try {
-      console.log(
-        "Generating PDF for patient:",
-        patient,
-        "with treatment:",
-        latestTreatment
-      );
-      // 3. Pass BOTH the patient and the latestTreatment objects to the function.
-      await generatePDF(patient, latestTreatment);
-
-      toast({
-        title: "PDF Downloaded",
-        description: `Patient record for ${patient.patientName} has been downloaded successfully.`,
-      });
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast({
-        title: "Download Failed",
-        description: "Failed to generate PDF. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
-  };
-
-  const getLatestTreatment = (patient: PatientData) => {
-    if (!patient.treatmentEntries || patient.treatmentEntries.length === 0) {
-      return null;
-    }
-    return patient.treatmentEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
   };
 
   if (loading) {
@@ -204,7 +177,9 @@ const DoctorDashboard = () => {
       <Card className="text-center py-12">
         <CardContent>
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Data</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Error Loading Data
+          </h3>
           <p className="text-gray-600 mb-4">{error}</p>
           <Button onClick={loadPatients}>Try Again</Button>
         </CardContent>
@@ -229,11 +204,9 @@ const DoctorDashboard = () => {
       {/* Results Summary */}
       <div className="flex items-center justify-between">
         <p className="text-gray-600">
-          {filteredPatients.length === 0 && searchTerm ? (
-            "No patients found matching your search"
-          ) : (
-            `Showing ${filteredPatients.length} of ${patients.length} patient records`
-          )}
+          {filteredPatients.length === 0 && searchTerm
+            ? "No patients found matching your search"
+            : `Showing ${filteredPatients.length} of ${patients.length} patient records`}
         </p>
         <Badge variant="secondary" className="bg-blue-100 text-blue-800">
           Total Patients: {patients.length}
@@ -246,41 +219,59 @@ const DoctorDashboard = () => {
           <Card className="text-center py-12">
             <CardContent>
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Patient Records Yet</h3>
-              <p className="text-gray-600">Start by adding your first patient record using the form.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No Patient Records Yet
+              </h3>
+              <p className="text-gray-600">
+                Start by adding your first patient record using the form.
+              </p>
             </CardContent>
           </Card>
         ) : filteredPatients.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Results Found</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No Results Found
+              </h3>
               <p className="text-gray-600">Try adjusting your search terms.</p>
             </CardContent>
           </Card>
         ) : (
           filteredPatients.map((patient) => {
-            const latestTreatment = getLatestTreatment(patient);
             return (
-              <Card key={patient._id} className="hover:shadow-lg transition-shadow duration-200">
+              <Card
+                key={patient._id}
+                className="hover:shadow-lg transition-shadow duration-200"
+              >
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle className="text-xl text-gray-900 mb-1">{patient.patientName}</CardTitle>
+                      <CardTitle className="text-xl text-gray-900 mb-1">
+                        {patient.patientName}
+                      </CardTitle>
                       <div className="flex items-center space-x-4 text-sm text-gray-600">
                         <span className="flex items-center space-x-1">
                           <Calendar className="h-4 w-4" />
                           <span>Created: {formatDate(patient.createdAt)}</span>
                         </span>
-                        <Badge variant="outline">{patient.referenceNumber}</Badge>
-                        {patient.treatmentEntries && patient.treatmentEntries.length > 0 && (
-                          <Badge variant="secondary">
-                            {patient.treatmentEntries.length} visit{patient.treatmentEntries.length !== 1 ? 's' : ''}
-                          </Badge>
-                        )}
+                        <Badge variant="outline">
+                          {patient.referenceNumber}
+                        </Badge>
+                        {patient.treatmentEntries &&
+                          patient.treatmentEntries.length > 0 && (
+                            <Badge variant="secondary">
+                              {patient.treatmentEntries.length} visit
+                              {patient.treatmentEntries.length !== 1 ? "s" : ""}
+                            </Badge>
+                          )}
                       </div>
                     </div>
                     <div className="flex space-x-2">
+                      <AddTreatmentModal
+                        patientId={patient._id}
+                        onTreatmentAdded={loadPatients}
+                      />
                       <Button
                         onClick={() => handleEditPatient(patient)}
                         variant="outline"
@@ -290,19 +281,11 @@ const DoctorDashboard = () => {
                         <Edit className="h-4 w-4" />
                         <span>Edit</span>
                       </Button>
-                      <Button
-                        onClick={() => handleDownloadPDF(patient)}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center space-x-2 hover:bg-blue-50 hover:border-blue-300"
-                      >
-                        <Download className="h-4 w-4" />
-                        <span>PDF</span>
-                      </Button>
+                      <TreatmentSelectorModal patient={patient} />
                     </div>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="flex items-start space-x-2">
@@ -312,62 +295,156 @@ const DoctorDashboard = () => {
                         <p className="text-gray-900">{patient.age} years</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-start space-x-2">
                       <Phone className="h-4 w-4 text-blue-600 mt-1 flex-shrink-0" />
                       <div>
-                        <p className="text-sm font-medium text-gray-700">Contact</p>
+                        <p className="text-sm font-medium text-gray-700">
+                          Contact
+                        </p>
                         <p className="text-gray-900">{patient.contactNumber}</p>
                       </div>
                     </div>
-                    
+
                     {patient.address && (
                       <div className="flex items-start space-x-2 md:col-span-2 lg:col-span-1">
                         <MapPin className="h-4 w-4 text-blue-600 mt-1 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium text-gray-700">Address</p>
-                          <p className="text-gray-900 text-sm">{patient.address}</p>
+                          <p className="text-sm font-medium text-gray-700">
+                            Address
+                          </p>
+                          <p className="text-gray-900 text-sm">
+                            {patient.address}
+                          </p>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {latestTreatment && (
+                  {patient.treatmentEntries &&
+                    patient.treatmentEntries.length > 0 && (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-gray-900 flex items-center space-x-2">
+                              <History className="h-4 w-4 text-blue-600" />
+                              <span>
+                                Treatment History (
+                                {patient.treatmentEntries.length} visits)
+                              </span>
+                            </h4>
+                          </div>
+
+                          <div className="space-y-4 max-h-96 overflow-y-auto">
+                            {patient.treatmentEntries
+                              .sort(
+                                (a, b) =>
+                                  new Date(b.date).getTime() -
+                                  new Date(a.date).getTime()
+                              )
+                              .map((treatment, index) => (
+                                <div
+                                  key={treatment._id || index}
+                                  className="border rounded-lg p-4 space-y-3"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                      <Calendar className="h-4 w-4 text-blue-600" />
+                                      <span className="font-medium text-gray-900">
+                                        Visit{" "}
+                                        {patient.treatmentEntries.length -
+                                          index}
+                                      </span>
+                                      <span className="text-sm text-gray-600">
+                                        {new Date(
+                                          treatment.date
+                                        ).toLocaleDateString("en-US", {
+                                          year: "numeric",
+                                          month: "short",
+                                          day: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })}
+                                      </span>
+                                    </div>
+                                    {index === 0 && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        Latest
+                                      </Badge>
+                                    )}
+                                  </div>
+
+                                  {treatment.medicinePrescriptions && (
+                                    <div className="flex items-start space-x-2">
+                                      <Pill className="h-4 w-4 text-green-600 mt-1 flex-shrink-0" />
+                                      <div className="flex-1">
+                                        <p className="text-sm font-medium text-gray-700 mb-1">
+                                          Prescriptions
+                                        </p>
+                                        <div className="bg-green-50 p-3 rounded-lg">
+                                          <p className="text-gray-900 text-sm whitespace-pre-wrap">
+                                            {treatment.medicinePrescriptions}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {treatment.advisories && (
+                                    <div className="flex items-start space-x-2">
+                                      <FileText className="h-4 w-4 text-blue-600 mt-1 flex-shrink-0" />
+                                      <div className="flex-1">
+                                        <p className="text-sm font-medium text-gray-700 mb-1">
+                                          Advisories
+                                        </p>
+                                        <div className="bg-blue-50 p-3 rounded-lg">
+                                          <p className="text-gray-900 text-sm whitespace-pre-wrap">
+                                            {treatment.advisories}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {treatment.notes && (
+                                    <div className="flex items-start space-x-2">
+                                      <FileText className="h-4 w-4 text-gray-600 mt-1 flex-shrink-0" />
+                                      <div className="flex-1">
+                                        <p className="text-sm font-medium text-gray-700 mb-1">
+                                          Notes
+                                        </p>
+                                        <div className="bg-gray-50 p-3 rounded-lg">
+                                          <p className="text-gray-900 text-sm whitespace-pre-wrap">
+                                            {treatment.notes}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                  {(!patient.treatmentEntries ||
+                    patient.treatmentEntries.length === 0) && (
                     <>
                       <Separator />
-                      <div className="space-y-3">
-                        <h4 className="font-semibold text-gray-900 flex items-center space-x-2">
-                          <Calendar className="h-4 w-4 text-blue-600" />
-                          <span>Latest Treatment - {new Date(latestTreatment.date).toLocaleDateString()}</span>
-                        </h4>
-                        
-                        {latestTreatment.medicinePrescriptions && (
-                          <div className="flex items-start space-x-2">
-                            <Pill className="h-4 w-4 text-blue-600 mt-1 flex-shrink-0" />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-700 mb-1">Prescriptions</p>
-                              <div className="bg-gray-50 p-3 rounded-lg">
-                                <p className="text-gray-900 text-sm whitespace-pre-wrap">
-                                  {latestTreatment.medicinePrescriptions}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {latestTreatment.advisories && (
-                          <div className="flex items-start space-x-2">
-                            <FileText className="h-4 w-4 text-blue-600 mt-1 flex-shrink-0" />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-700 mb-1">Advisories</p>
-                              <div className="bg-blue-50 p-3 rounded-lg">
-                                <p className="text-gray-900 text-sm whitespace-pre-wrap">
-                                  {latestTreatment.advisories}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                      <div className="text-center py-6 bg-gray-50 rounded-lg">
+                        <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-gray-600 text-sm">
+                          No treatment records yet
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          Add the first visit using the "Add New Visit" button
+                          above
+                        </p>
                       </div>
                     </>
                   )}

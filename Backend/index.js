@@ -80,7 +80,11 @@ const authenticateToken = (req, res, next) => {
 // Send OTP using SendGrid
 const sendOtpEmail = async (email, otp) => {
   console.log(`Attempting to send email to: ${email}`);
-  console.log(`Using SendGrid API key: ${process.env.SENDGRID_API_KEY ? "Set" : "Not set"}`);
+  console.log(
+    `Using SendGrid API key: ${
+      process.env.SENDGRID_API_KEY ? "Set" : "Not set"
+    }`
+  );
   console.log(`From email: ${process.env.SENDGRID_FROM_EMAIL}`);
   const msg = {
     to: email,
@@ -537,6 +541,171 @@ app.delete("/api/patients/:id", authenticateToken, async (req, res) => {
     });
   }
 });
+
+// Add new treatment entry to a patient
+app.post(
+  "/api/patients/:id/treatments",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { medicinePrescriptions, advisories, notes, weight, height, rbs } =
+        req.body;
+
+      // Find patient and verify ownership
+      const patient = await Patient.findOne({
+        _id: req.params.id,
+        doctor: req.user.id,
+      });
+
+      if (!patient) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Patient not found or you do not have permission to add treatment",
+        });
+      }
+
+      // Create new treatment entry
+      const newTreatment = {
+        date: new Date(),
+        medicinePrescriptions: medicinePrescriptions || "",
+        advisories: advisories || "",
+        notes: notes || "",
+      };
+
+      // Update vital signs if provided
+      if (weight !== undefined) patient.weight = weight;
+      if (height !== undefined) patient.height = height;
+      if (rbs !== undefined) patient.rbs = rbs;
+
+      // Add treatment entry
+      patient.treatmentEntries.push(newTreatment);
+      await patient.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Treatment entry added successfully",
+        data: patient,
+      });
+    } catch (error) {
+      console.error("Error adding treatment entry:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to add treatment entry",
+        error: error.message,
+      });
+    }
+  }
+);
+
+// Update a specific treatment entry
+app.put(
+  "/api/patients/:id/treatments/:treatmentId",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { medicinePrescriptions, advisories, notes } = req.body;
+
+      // Find patient and verify ownership
+      const patient = await Patient.findOne({
+        _id: req.params.id,
+        doctor: req.user.id,
+      });
+
+      if (!patient) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Patient not found or you do not have permission to update treatment",
+        });
+      }
+
+      // Find the specific treatment entry
+      const treatmentEntry = patient.treatmentEntries.id(
+        req.params.treatmentId
+      );
+
+      if (!treatmentEntry) {
+        return res.status(404).json({
+          success: false,
+          message: "Treatment entry not found",
+        });
+      }
+
+      // Update treatment entry
+      if (medicinePrescriptions !== undefined)
+        treatmentEntry.medicinePrescriptions = medicinePrescriptions;
+      if (advisories !== undefined) treatmentEntry.advisories = advisories;
+      if (notes !== undefined) treatmentEntry.notes = notes;
+
+      await patient.save();
+
+      res.json({
+        success: true,
+        message: "Treatment entry updated successfully",
+        data: patient,
+      });
+    } catch (error) {
+      console.error("Error updating treatment entry:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to update treatment entry",
+        error: error.message,
+      });
+    }
+  }
+);
+
+// Delete a specific treatment entry
+app.delete(
+  "/api/patients/:id/treatments/:treatmentId",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      // Find patient and verify ownership
+      const patient = await Patient.findOne({
+        _id: req.params.id,
+        doctor: req.user.id,
+      });
+
+      if (!patient) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Patient not found or you do not have permission to delete treatment",
+        });
+      }
+
+      // Remove the specific treatment entry
+      const treatmentEntry = patient.treatmentEntries.id(
+        req.params.treatmentId
+      );
+
+      if (!treatmentEntry) {
+        return res.status(404).json({
+          success: false,
+          message: "Treatment entry not found",
+        });
+      }
+
+      patient.treatmentEntries.pull(req.params.treatmentId);
+      await patient.save();
+
+      res.json({
+        success: true,
+        message: "Treatment entry deleted successfully",
+        data: patient,
+      });
+    } catch (error) {
+      console.error("Error deleting treatment entry:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to delete treatment entry",
+        error: error.message,
+      });
+    }
+  }
+);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

@@ -1,7 +1,7 @@
-
 // src/types/patient.ts
 export interface TreatmentEntry {
-  id: string;
+  _id?: string; // MongoDB ID
+  id?: string; // For backward compatibility
   date: string;
   medicinePrescriptions: string;
   advisories?: string;
@@ -9,16 +9,19 @@ export interface TreatmentEntry {
 }
 
 export interface PatientData {
-  _id?: string;  // MongoDB ID
-  id?: string;   // For backward compatibility
+  _id?: string; // MongoDB ID
+  id?: string; // For backward compatibility
   patientName: string;
   age: string;
+  weight?: string;
+  height?: string;
+  rbs?: string;
   address: string;
   referenceNumber: string;
   referencePerson?: string;
   contactNumber: string;
   patientProblem?: string;
-  doctor?: string;  // Reference to doctor's user ID
+  doctor?: string; // Reference to doctor's user ID
   createdAt?: string;
   updatedAt?: string;
   dateCreated?: string; // For backward compatibility
