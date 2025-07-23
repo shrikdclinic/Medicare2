@@ -1,336 +1,235 @@
 import jsPDF from 'jspdf';
-import { PatientData, TreatmentEntry } from '@/types/patient';
-import logo from '@/assets/nobglogo.png';
+import { PatientData, TreatmentEntry } from '@/types/patient'; // Assuming types are in this path
+import logo from '@/assets/nobglogo.png'; // Assuming logo is in this path
 
+export const generatePDF = async (patient: PatientData, treatment: TreatmentEntry) => {
+  const pdf = new jsPDF('p', 'mm', 'a4');
 
-export const generatePDF = async (patient: PatientData , treatment: TreatmentEntry) => {
-  const pdf = new jsPDF();
+  // --- Professional Color & Style Definitions ---
+  const primaryColor = [45, 52, 54] as const;   // Dark Slate
+  const secondaryColor = [9, 132, 227] as const; // Bright Blue
+  const mutedColor = [178, 190, 195] as const;   // Light Gray
+  const backgroundColor = [245, 246, 250] as const; // Off-white
+  const whiteColor = [255, 255, 255] as const;
+  const textColor = [45, 52, 54] as const;
 
-  // Define colors
-  const headerBlue = [41, 128, 185] as const;
-  const darkBlue = [52, 73, 94] as const;
-  const borderGray = [149, 165, 166] as const;
-  const textBlack = [0, 0, 0] as const;
-  const lightGray = [248, 249, 250] as const;
+  // --- Page and Layout Variables ---
+  const pageMargin = 15;
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const contentWidth = pageWidth - (pageMargin * 2);
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const maxContentY = pageHeight - 30; // Reserve space for footer
 
-  const tableWidth = 170;
-  const columnWidth = (tableWidth - 4) / 3; // 3 columns with 2px spacing
+  // --- Reusable Drawing Functions ---
 
-  const drawBorderedRect = (x: number, y: number, width: number, height: number, fillColor?: [number, number, number]) => {
-    if (fillColor) {
-      pdf.setFillColor(...fillColor);
-      pdf.rect(x, y, width, height, 'F');
-    }
-    pdf.setDrawColor(...borderGray);
-    pdf.setLineWidth(0.5);
-    pdf.rect(x, y, width, height);
+  /**
+   * Draws a rectangle with rounded corners.
+   */
+  const drawRoundedRect = (x: number, y: number, w: number, h: number, r: number, style: 'F' | 'FD' | 'S' = 'F') => {
+    pdf.roundedRect(x, y, w, h, r, r, style);
   };
 
-  const addWrappedText = (text: string, x: number, y: number, maxWidth: number, fontSize = 8, lineHeight = 4) => {
-    if (!text) return 0;
-    pdf.setFontSize(fontSize);
-    const cleanText = text.replace(/\s+/g, ' ').trim();
-    const margin = 3;
-    const effectiveWidth = maxWidth - margin * 2;
-    const lines = pdf.splitTextToSize(cleanText, effectiveWidth);
-    lines.forEach((line, i) => pdf.text(line, x + margin, y + i * lineHeight));
-    return lines.length * lineHeight;
-  };
-
-  const calculateTextHeight = (text: string, maxWidth: number, fontSize = 8, lineHeight = 4) => {
-    if (!text) return 0;
-    pdf.setFontSize(fontSize);
-    const cleanText = text.replace(/\s+/g, ' ').trim();
-    const margin = 3;
-    const effectiveWidth = maxWidth - margin * 2;
-    const lines = pdf.splitTextToSize(cleanText, effectiveWidth);
-    return lines.length * lineHeight;
-  };
-
-  const parsePointsFromText = (text: string): string[] => {
-    if (!text) return [];
-    
-    // First, check if the text already contains numbered points (1., 2., 3., etc.)
-    const numberedPointsRegex = /^\d+\.\s*(.+?)(?=\d+\.\s*|$)/gm;
-    const numberedMatches = text.match(numberedPointsRegex);
-    
-    if (numberedMatches && numberedMatches.length > 1) {
-      // If numbered points are found, extract the content after the numbers
-      return numberedMatches
-        .map(point => point.replace(/^\d+\.\s*/, '').trim())
-        .filter(point => point.length > 0)
-        .slice(0, 30);
-    }
-    
-    // If no numbered points, split by common delimiters but avoid splitting on numbers
-    const points = text
-      .split(/[,;]|\band\b|\s&\s|\n/)
-      .map(point => point.trim())
-      .filter(point => point.length > 3) // Filter out very short segments
-      .slice(0, 30); // Limit to 30 points max
-    
-    return points;
-  };
-
-  const drawThreeColumnPoints = (
-    title: string, 
-    text: string, 
-    x: number, 
-    y: number, 
-    width: number
-  ) => {
-    const points = parsePointsFromText(text);
-    const pointsPerColumn = 10;
-    const baseRowHeight = 6;
-    const headerHeight = 15;
-    const minContainerHeight = headerHeight + (pointsPerColumn * baseRowHeight) + 10;
-
-    // Calculate actual height needed for wrapped text
-    let actualHeight = headerHeight + 10;
-    const columnHeights = [0, 0, 0]; // Track height for each column
-    
-    // Draw column headers
-    const col1X = x + 2;
-    const col2X = x + columnWidth + 3;
-    const col3X = x + (columnWidth * 2) + 4;
-    const headerY = y + headerHeight;
-    
-    // Pre-calculate heights for each column
-    pdf.setFontSize(7);
-    for (let i = 0; i < Math.min(points.length, 30); i++) {
-      const columnIndex = Math.floor(i / pointsPerColumn);
-      const pointText = points[i];
-      
-      // Calculate wrapped text height for this point
-      const numberWidth = 18; // Space for number
-      const textWidth = columnWidth - numberWidth - 2; // Minimal margin
-      const wrappedHeight = Math.max(baseRowHeight, calculateTextHeight(pointText, textWidth, 7, 3) + 2);
-      
-      columnHeights[columnIndex] += wrappedHeight;
-    }
-    
-    // Use the tallest column to determine total height
-    const maxColumnHeight = Math.max(...columnHeights, pointsPerColumn * baseRowHeight);
-    const totalHeight = headerHeight + maxColumnHeight + 10;
-
-    // Draw main container
-    drawBorderedRect(x, y, width, totalHeight, lightGray);
-    
-    // Draw title
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(11);
-    pdf.setTextColor(...darkBlue);
-    pdf.text(title, x + 5, y + 10);
-
-    // Column dividers removed for cleaner look
-
-    // Column headers
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(8);
-    pdf.setTextColor(...textBlack);
-    pdf.text('', col1X + 2, headerY);
-    pdf.text('', col2X + 2, headerY);
-    pdf.text('', col3X + 2, headerY);
-
-    // Draw points in columns with proper wrapping
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(7);
-    
-    const columnYPositions = [headerY + 8, headerY + 8, headerY + 8]; // Track Y position for each column
-    
-    for (let i = 0; i < Math.min(points.length, 30); i++) {
-      const columnIndex = Math.floor(i / pointsPerColumn);
-      const pointText = points[i];
-      
-      let pointX: number;
-      switch (columnIndex) {
-        case 0:
-          pointX = col1X;
-          break;
-        case 1:
-          pointX = col2X;
-          break;
-        case 2:
-          pointX = col3X;
-          break;
-        default:
-          continue;
-      }
-
-      const currentY = columnYPositions[columnIndex];
-      
-      // Add number
-      const pointNumber = `${i + 1}.`;
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(pointNumber, pointX, currentY);
-      
-      // Add wrapped text - aligned directly with number
-      pdf.setFont('helvetica', 'normal');
-      const numberWidth = 4; // Space for number
-      const textWidth = columnWidth - numberWidth - 2;
-      const textHeight = addWrappedText(pointText, pointX + numberWidth, currentY, textWidth, 7, 3);
-      
-      // Update Y position for next point in this column
-      columnYPositions[columnIndex] += Math.max(baseRowHeight, textHeight + 2);
-    }
-
-    // If no points, show placeholder
-    if (points.length === 0) {
-      pdf.setFont('helvetica', 'italic');
-      pdf.setFontSize(8);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text('No specific points recorded', x + 5, headerY + 20);
-    }
-
-    return totalHeight;
-  };
-
-  const drawTextBox = (title: string, text: string, x: number, y: number, width: number, fontSize = 8, lineHeight = 4) => {
-    const textHeight = calculateTextHeight(text, width, fontSize, lineHeight);
-    const height = textHeight + 20;
-    drawBorderedRect(x, y, width, height);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
-    pdf.setTextColor(...darkBlue);
-    pdf.text(title, x + 2, y + 6);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(...textBlack);
-    addWrappedText(text, x, y + 12, width, fontSize, lineHeight);
-    return height;
-  };
-
-  // Header
-  const headerHeight = 40;
-  pdf.setFillColor(...headerBlue);
-  pdf.rect(0, 0, 210, headerHeight, 'F');
-  pdf.addImage(logo, 'PNG', 10, 10, 30, 30);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(16);
-  pdf.setTextColor(255, 255, 255);
-  pdf.text('SHRI K D HOMEOPATHIC', 45, 18);
-  pdf.text('CLINIC AND PHARMACY', 45, 26);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(10);
-  pdf.text('Dr. RAHUL KATARIYA', 150, 18);
-  pdf.text('BHMS, MD(EH)', 150, 26);
-
-  let yPosition = 55;
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(14);
-  pdf.setTextColor(...textBlack);
-  pdf.text('Patient Medical Record', 20, yPosition);
-  yPosition += 8;
-
-  // Patient Info Rows
-  const cellHeight = 12;
-  drawBorderedRect(20, yPosition, 85, cellHeight);
-  drawBorderedRect(105, yPosition, 85, cellHeight);
-  pdf.setFontSize(9);
-  pdf.setTextColor(...textBlack);
-  pdf.text(`ID: ${patient.referenceNumber || '01'}`, 22, yPosition + 8);
-  const formattedDate = new Date(patient.createdAt).toLocaleDateString('en-GB', { 
-    day: '2-digit', 
-    month: 'short', 
-    year: 'numeric' 
-  });
-  pdf.text(`Date: ${formattedDate}`, 107, yPosition + 8);
-
-  yPosition += cellHeight;
-  drawBorderedRect(20, yPosition, 85, cellHeight);
-  drawBorderedRect(105, yPosition, 85, cellHeight);
-  pdf.text(`Name: ${patient.patientName}`, 22, yPosition + 8);
-  const birthYear = new Date().getFullYear() - parseInt(patient.age);
-  pdf.text(`DOB: 01Aug${birthYear}`, 107, yPosition + 8);
-
-  yPosition += cellHeight;
-  drawBorderedRect(20, yPosition, 85, cellHeight);
-  drawBorderedRect(105, yPosition, 85, cellHeight);
-  pdf.text(`Mobile: ${patient.contactNumber}`, 22, yPosition + 8);
-  pdf.text(`Reference: ${patient.referencePerson || 'N/A'}`, 107, yPosition + 8);
-  yPosition += cellHeight;
-
-  // Address
-  const addressText = (patient.address || 'Gwalior');
-  yPosition += drawTextBox('Address', addressText, 20, yPosition, tableWidth) + 10;
-
-  // Patient Problems - 3 Column Format
-  const problemsText = patient.patientProblem || '';
-  yPosition += drawThreeColumnPoints('Patient Problems & Symptoms', problemsText, 20, yPosition, tableWidth) + 10;
-
-  // Check if we need a new page
-  if (yPosition > 200) {
-    pdf.addPage();
-    yPosition = 20;
-  }
-
-  // Treatment/Prescriptions - 3 Column Format
-  const recentTreatment = patient.treatmentEntries?.at(-1);
-  // console.log('Recent Treatment:', recentTreatment);
-  const treatmentText = recentTreatment?.medicinePrescriptions || '';
-  // console.log('Treatment Text:', treatmentText);
-  yPosition += drawThreeColumnPoints('Medicine Prescriptions', treatmentText, 20, yPosition, tableWidth) + 10;
-
-  // Check if we need a new page
-  if (yPosition > 200) {
-    pdf.addPage();
-    yPosition = 20;
-  }
-
-  // Advisories - 3 Column Format
-  const advisoriesText = recentTreatment?.advisories || recentTreatment?.notes || '';
-  yPosition += drawThreeColumnPoints('Medical Advisories & Instructions', advisoriesText, 20, yPosition, tableWidth) + 10;
-
-  // Additional Visits
-  const visits = [...(patient.treatmentEntries || [])];
-
-if (visits.length > 1) {
-  // Sort visits by date
-  visits.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  
-  for (let i = 1; i < visits.length; i++) {
-    const treatment = visits[i];
-    // console.log(visits);
-    pdf.addPage();
-    
-    // Header for additional visits
-    pdf.setFillColor(...headerBlue);
-    pdf.rect(0, 0, 210, headerHeight, 'F');
-    pdf.addImage(logo, 'PNG', 10, 10, 30, 30);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(16);
-    pdf.setTextColor(255, 255, 255);
-    pdf.text('SHRI K D HOMEOPATHIC', 45, 18);
-    pdf.text('CLINIC AND PHARMACY', 45, 26);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(10);
-    pdf.text('Dr. RAHUL KATARIYA', 150, 18);
-    pdf.text('BHMS, MD(EH)', 150, 26);
-    
-    yPosition = 55;
+  /**
+   * Creates a standardized, professional-looking header for each section.
+   */
+  const drawSectionHeader = (title: string, y: number): number => {
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(14);
-    pdf.setTextColor(...textBlack);
-    pdf.text(`Follow-up Visit ${i + 1}`, 20, yPosition);
+    pdf.setTextColor(...secondaryColor);
+    pdf.text(title, pageMargin, y);
+    pdf.setDrawColor(...mutedColor);
+    pdf.setLineWidth(0.2);
+    pdf.line(pageMargin, y + 2, pageWidth - pageMargin, y + 2);
+    return y + 10;
+  };
+
+  /**
+   * Draws medical items in a 3-column horizontal grid with numbers.
+   * @returns The total height of the generated grid.
+   */
+  const drawHorizontalGrid = (text: string, y: number): number => {
+    const startY = y;
+    const points = text ? text.split(/\n/).map(p => p.replace(/^\d+\.\s*/, '').trim()).filter(Boolean) : [];
+
+    if (points.length === 0) {
+      pdf.setFont('helvetica', 'italic');
+      pdf.setFontSize(9);
+      pdf.setTextColor(...mutedColor);
+      pdf.text('No items recorded for this section.', pageMargin + 5, y);
+      return 15;
+    }
+
+    const itemPadding = 10;
+    const rowHeight = 7;
+    const numColumns = 3; // Changed back to 3 columns
+    const colWidth = (contentWidth - (itemPadding * (numColumns - 1))) / numColumns;
+    let currentY = y;
+    let isTruncated = false;
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(...textColor);
+
+    for (let i = 0; i < points.length; i++) {
+      const colIndex = i % numColumns;
+
+      if (currentY + rowHeight > maxContentY) {
+        isTruncated = true;
+        break;
+      }
+      
+      const currentX = pageMargin + (colWidth + itemPadding) * colIndex;
+      const itemNumber = `${i + 1}.`;
+      const numberWidth = pdf.getStringUnitWidth(itemNumber) * pdf.getFontSize() / pdf.internal.scaleFactor + 2;
+
+      // Draw item number
+      pdf.setTextColor(...secondaryColor);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(itemNumber, currentX, currentY);
+      
+      // Draw item text
+      pdf.setTextColor(...textColor);
+      pdf.setFont('helvetica', 'normal');
+      const truncatedText = pdf.splitTextToSize(points[i], colWidth - numberWidth)[0];
+      pdf.text(truncatedText, currentX + numberWidth, currentY);
+
+      if (colIndex === numColumns - 1) {
+        currentY += rowHeight;
+      }
+    }
+
+    if (isTruncated) {
+        pdf.setFont('helvetica', 'italic').setTextColor(...mutedColor).text('[...content truncated to fit page]', pageMargin, currentY + 5);
+    }
     
-    yPosition += 15;
+    return (currentY - startY) + (isTruncated ? 10 : 10);
+  };
+
+  // =================================================================
+  //                       PDF DOCUMENT GENERATION
+  // =================================================================
+
+  // --- 1. Background ---
+  pdf.setFillColor(...backgroundColor);
+  pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+
+  // --- 2. Header ---
+  const headerHeight = 30;
+  pdf.setFillColor(...whiteColor);
+  drawRoundedRect(pageMargin, 10, contentWidth, headerHeight, 3, 'F');
+
+  if (logo) {
+    pdf.addImage(logo, 'PNG', pageMargin + 5, 15, 20, 20);
+  }
+  
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(16);
+  pdf.setTextColor(...primaryColor);
+  pdf.text('SHRI K D HOMEOPATHIC', pageMargin + 30, 23);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  pdf.setTextColor(...secondaryColor);
+  pdf.text('CLINIC AND PHARMACY', pageMargin + 30, 30);
+
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(...primaryColor);
+  pdf.text('Dr. RAHUL KATARIYA', pageWidth - pageMargin - 45, 23, { align: 'left' });
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(...textColor);
+  pdf.text('BHMS, MD(EH)', pageWidth - pageMargin - 45, 30, { align: 'left' });
+  pdf.text('Reg. No. 22880', pageWidth - pageMargin - 45, 36, { align: 'left' });
+
+  // --- 3. Patient Details Section ---
+  let yPosition = headerHeight + 25;
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(18);
+  pdf.setTextColor(...primaryColor);
+  pdf.text('Patient Medical Record', pageMargin, yPosition);
+  yPosition += 10;
+
+  pdf.setFillColor(...whiteColor);
+  pdf.setDrawColor(...mutedColor);
+  pdf.setLineWidth(0.2);
+  drawRoundedRect(pageMargin, yPosition, contentWidth, 32, 3, 'FD');
+
+  const cellY = yPosition + 10;
+  const fields = [
+    { label: 'Patient Name', value: patient.patientName },
+    { label: 'Patient ID', value: patient.referenceNumber || 'N/A' },
+    { label: 'Record Date', value: new Date(treatment.date).toLocaleDateString('en-GB') }
+  ];
+  const colWidthDetails = contentWidth / fields.length;
+  
+  fields.forEach((field, i) => {
+    const x = pageMargin + (colWidthDetails * i);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8);
+    pdf.setTextColor(...secondaryColor);
+    pdf.text(field.label.toUpperCase(), x + 10, cellY);
+    
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(10);
-    pdf.text(`Patient: ${patient.patientName} | ID: ${patient.referenceNumber} | Date: ${new Date(treatment.date).toLocaleDateString('en-GB')}`, 20, yPosition);
-    
-    yPosition += 20;
-    
-    // Visit prescriptions
-    yPosition += drawThreeColumnPoints('Visit Prescriptions', treatment.medicinePrescriptions || '', 20, yPosition, tableWidth) + 10;
-    
-    // Visit notes
-    // yPosition += drawThreeColumnPoints('Visit Notes & Observations', treatment.notes || '', 20, yPosition, tableWidth) + 10;
-    
-    // Visit advisories
-    yPosition += drawThreeColumnPoints('Visit Advisories', treatment.advisories || '', 20, yPosition, tableWidth) + 10;
-  }
-}
+    pdf.setTextColor(...textColor);
+    pdf.text(field.value, x + 10, cellY + 6);
 
-  // Generate filename
-  const fileName = `KD_Homeopathic_${patient.patientName.replace(/\s+/g, '_')}_${patient.referenceNumber}_${new Date().toISOString().split('T')[0]}.pdf`;
+    if (i < fields.length - 1) {
+        pdf.setDrawColor(...backgroundColor);
+        pdf.line(x + colWidthDetails, yPosition + 2, x + colWidthDetails, yPosition + 30);
+    }
+  });
+
+  const subFields = [
+    { label: 'Contact', value: patient.contactNumber || 'N/A' },
+    { label: 'Age', value: `${patient.age} Years` },
+    { label: 'Address', value: patient.address || 'N/A' },
+    { label: 'Reference', value: patient.referencePerson || 'N/A' }
+  ];
+  const subY = yPosition + 22;
+  const subColWidth = contentWidth / 4;
+  subFields.forEach((field, i) => {
+    const x = pageMargin + (subColWidth * i);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8);
+    pdf.setTextColor(...mutedColor);
+    pdf.text(field.label.toUpperCase(), x + 10, subY);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(...textColor);
+    pdf.text(pdf.splitTextToSize(field.value, subColWidth - 12), x + 10, subY + 5);
+  });
+
+  yPosition += 45; // Move cursor down past the details box
+
+  // --- 4. Medical Information Sections ---
+  if (yPosition < maxContentY) {
+    yPosition = drawSectionHeader('Patient Problems & Symptoms', yPosition);
+    yPosition += drawHorizontalGrid(patient.patientProblem || '', yPosition);
+  }
+  
+  if (yPosition < maxContentY) {
+    yPosition = drawSectionHeader('Medicine Prescriptions', yPosition);
+    yPosition += drawHorizontalGrid(treatment.medicinePrescriptions || '', yPosition);
+  }
+
+  if (yPosition < maxContentY) {
+    const advisories = treatment.advisories || treatment.notes || '';
+    yPosition = drawSectionHeader('Medical Advisories & Instructions', yPosition);
+    yPosition += drawHorizontalGrid(advisories, yPosition);
+  }
+
+  // --- 5. Footer ---
+  const footerY = pageHeight - 15;
+  pdf.setDrawColor(...mutedColor);
+  pdf.setLineWidth(0.3);
+  pdf.line(pageMargin, footerY, pageWidth - pageMargin, footerY);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8);
+  pdf.setTextColor(...mutedColor);
+  pdf.text('SHRI K D HOMEOPATHIC CLINIC | Samadhiya Colony, Gwalior', pageMargin, footerY + 5);
+  const generationDate = `Generated on: ${new Date().toLocaleDateString('en-GB')}`;
+  pdf.text(generationDate, pageWidth - pageMargin, footerY + 5, { align: 'right' });
+
+  // --- 6. Generate and Save PDF ---
+  const fileName = `Record_${patient.patientName.replace(/\s+/g, '_')}_${patient.referenceNumber}.pdf`;
   pdf.save(fileName);
 };
