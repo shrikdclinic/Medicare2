@@ -137,13 +137,35 @@ const DoctorDashboard = () => {
   };
 
   const handleDownloadPDF = async (patient: PatientData) => {
+    // 1. Find the most recent treatment entry.
+    const latestTreatment = getLatestTreatment(patient);
+
+    // 2. Check if a treatment entry exists before generating the PDF.
+    if (!latestTreatment) {
+      toast({
+        title: "Cannot Generate PDF",
+        description: "This patient does not have any treatment records yet.",
+        variant: "destructive",
+      });
+      return; // Stop the function if no treatment is found
+    }
+
     try {
-      await generatePDF(patient);
+      console.log(
+        "Generating PDF for patient:",
+        patient,
+        "with treatment:",
+        latestTreatment
+      );
+      // 3. Pass BOTH the patient and the latestTreatment objects to the function.
+      await generatePDF(patient, latestTreatment);
+
       toast({
         title: "PDF Downloaded",
         description: `Patient record for ${patient.patientName} has been downloaded successfully.`,
       });
     } catch (error) {
+      console.error("Error generating PDF:", error);
       toast({
         title: "Download Failed",
         description: "Failed to generate PDF. Please try again.",
