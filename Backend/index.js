@@ -85,11 +85,11 @@ const sendOtpEmail = async (email, otp) => {
       process.env.SENDGRID_API_KEY ? "Set" : "Not set"
     }`
   );
-  console.log(`From email: ${process.env.SENDGRID_FROM_EMAIL}`);
+  console.log(`From email: ${process.env.FROM_EMAIL}`);
   const msg = {
     to: email,
     from: {
-      email: process.env.SENDGRID_FROM_EMAIL, // Must be verified in SendGrid
+      email: process.env.FROM_EMAIL, // Must be verified in SendGrid
       name: "MediCare Clinic",
     },
     subject: "MediCare Clinic - Login Verification Code",
