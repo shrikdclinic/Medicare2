@@ -10,7 +10,7 @@ export const generatePDF = async (
   const pdf = new jsPDF("p", "mm", "a4");
   // A single call to generatePDF is always visit 1 of 1.
   await generateSingleVisitPage(pdf, patient, treatment, 1, 1);
-  
+
   const fileName = `Record_${patient.patientName.replace(/\s+/g, "_")}_${
     patient.referenceNumber
   }.pdf`;
@@ -38,7 +38,7 @@ export const generateMultiVisitPDF = async (
   // Generate a page for each treatment
   for (let i = 0; i < sortedTreatments.length; i++) {
     if (i > 0) {
-        pdf.addPage();
+      pdf.addPage();
     }
     await generateSingleVisitPage(
       pdf,
@@ -85,7 +85,12 @@ const generateSingleVisitPage = async (
 
   // --- Reusable Drawing Functions ---
   const drawRoundedRect = (
-    x: number, y: number, w: number, h: number, r: number, style: "F" | "FD" | "S" = "F"
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number,
+    style: "F" | "FD" | "S" = "F"
   ) => {
     pdf.roundedRect(x, y, w, h, r, r, style);
   };
@@ -101,32 +106,57 @@ const generateSingleVisitPage = async (
     return y + 12;
   };
 
-  const drawHorizontalGrid = (text: string, y: number, maxItems?: number): number => {
+  const drawHorizontalGrid = (
+    text: string,
+    y: number,
+    maxItems?: number
+  ): number => {
     const startY = y;
-    let points = text ? text.split(/\n/).map((p) => p.replace(/^\d+\.\s*/, "").trim()).filter(Boolean) : [];
+    let points = text
+      ? text
+          .split(/\n/)
+          .map((p) => p.replace(/^\d+\.\s*/, "").trim())
+          .filter(Boolean)
+      : [];
     if (maxItems && points.length > maxItems) {
       points = points.slice(0, maxItems);
     }
     if (points.length === 0) {
-      pdf.setFont("helvetica", "italic").setFontSize(9).setTextColor(...mutedColor);
+      pdf
+        .setFont("helvetica", "italic")
+        .setFontSize(9)
+        .setTextColor(...mutedColor);
       pdf.text("No items recorded for this section.", pageMargin + 5, y);
       return 15;
     }
-    const itemPadding = 10, rowHeight = 7, numColumns = 3;
-    const colWidth = (contentWidth - itemPadding * (numColumns - 1)) / numColumns;
+    const itemPadding = 10,
+      rowHeight = 7,
+      numColumns = 3;
+    const colWidth =
+      (contentWidth - itemPadding * (numColumns - 1)) / numColumns;
     let currentY = y;
     for (let i = 0; i < points.length; i++) {
       const colIndex = i % numColumns;
-      if (currentY + rowHeight > maxContentY) { break; }
+      if (currentY + rowHeight > maxContentY) {
+        break;
+      }
       const currentX = pageMargin + (colWidth + itemPadding) * colIndex;
       const itemNumber = `${i + 1}.`;
-      const numberWidth = (pdf.getStringUnitWidth(itemNumber) * pdf.getFontSize()) / pdf.internal.scaleFactor + 2;
+      const numberWidth =
+        (pdf.getStringUnitWidth(itemNumber) * pdf.getFontSize()) /
+          pdf.internal.scaleFactor +
+        2;
       pdf.setTextColor(...secondaryColor).setFont("helvetica", "bold");
       pdf.text(itemNumber, currentX, currentY);
       pdf.setTextColor(...textColor).setFont("helvetica", "normal");
-      const truncatedText = pdf.splitTextToSize(points[i], colWidth - numberWidth)[0];
+      const truncatedText = pdf.splitTextToSize(
+        points[i],
+        colWidth - numberWidth
+      )[0];
       pdf.text(truncatedText, currentX + numberWidth, currentY);
-      if (colIndex === numColumns - 1) { currentY += rowHeight; }
+      if (colIndex === numColumns - 1) {
+        currentY += rowHeight;
+      }
     }
     return currentY - startY + 10;
   };
@@ -139,38 +169,65 @@ const generateSingleVisitPage = async (
   const headerHeight = 30;
   pdf.setFillColor(...whiteColor);
   drawRoundedRect(pageMargin, 10, contentWidth, headerHeight, 3, "F");
-  if (logo) { pdf.addImage(logo, "PNG", pageMargin + 5, 15, 20, 20); }
-  pdf.setFont("helvetica", "bold").setFontSize(16).setTextColor(...primaryColor);
+  if (logo) {
+    pdf.addImage(logo, "PNG", pageMargin + 5, 15, 20, 20);
+  }
+  pdf
+    .setFont("helvetica", "bold")
+    .setFontSize(16)
+    .setTextColor(...primaryColor);
   pdf.text("SHRI K D HOMEOPATHIC", pageMargin + 30, 23);
-  pdf.setFont("helvetica", "normal").setFontSize(10).setTextColor(...secondaryColor);
+  pdf
+    .setFont("helvetica", "normal")
+    .setFontSize(10)
+    .setTextColor(...secondaryColor);
   pdf.text("CLINIC AND PHARMACY", pageMargin + 30, 30);
   pdf.setFont("helvetica", "bold").setTextColor(...primaryColor);
-  pdf.text("Dr. RAHUL KATARIYA", pageWidth - pageMargin - 45, 23, { align: "left" });
+  pdf.text("Dr. RAHUL KATARIYA", pageWidth - pageMargin - 45, 23, {
+    align: "left",
+  });
   pdf.setFont("helvetica", "normal").setTextColor(...textColor);
   pdf.text("BHMS, MD(EH)", pageWidth - pageMargin - 45, 30, { align: "left" });
-  pdf.text("Reg. No. 22880", pageWidth - pageMargin - 45, 36, { align: "left" });
+  pdf.text("Reg. No. 22880", pageWidth - pageMargin - 45, 36, {
+    align: "left",
+  });
 
   // --- 3. Patient Details Section ---
   let yPosition = headerHeight + 25;
-  pdf.setFont("helvetica", "bold").setFontSize(18).setTextColor(...primaryColor);
+  pdf
+    .setFont("helvetica", "bold")
+    .setFontSize(18)
+    .setTextColor(...primaryColor);
   // CHANGE 1: Title now includes the visit number
-  pdf.text(`Patient Medical Record visit - ${pageNumber}`, pageMargin, yPosition);
+  pdf.text(
+    `Patient Medical Record visit - ${pageNumber}`,
+    pageMargin,
+    yPosition
+  );
   yPosition += 10;
 
-  pdf.setFillColor(...whiteColor).setDrawColor(...mutedColor).setLineWidth(0.2);
+  pdf
+    .setFillColor(...whiteColor)
+    .setDrawColor(...mutedColor)
+    .setLineWidth(0.2);
   // Adjusted height to fit the new 3-row layout
   drawRoundedRect(pageMargin, yPosition, contentWidth, 42, 3, "FD");
 
   // CHANGE 2 & 3: New patient details layout matching the image
   // CHANGE 2: Format patient name with age and gender
-  const genderChar = patient.gender ? patient.gender.charAt(0).toUpperCase() : 'M';
+  const genderChar = patient.gender
+    ? patient.gender.charAt(0).toUpperCase()
+    : "M";
   const formattedName = `${patient.patientName} / ${patient.age} ${genderChar}`;
 
   const detailsFields = [
     // Row 1
     { label: "PATIENT NAME", value: formattedName },
     { label: "PATIENT ID", value: patient.referenceNumber || "N/A" },
-    { label: "RECORD DATE", value: new Date(treatment.date).toLocaleDateString("en-GB")},
+    {
+      label: "RECORD DATE",
+      value: new Date(treatment.date).toLocaleDateString("en-GB"),
+    },
     // Row 2
     { label: "WEIGHT", value: patient.weight ? `${patient.weight} kg` : "N/A" },
     { label: "BP", value: patient.bp ? `${patient.bp} mmHg` : "N/A" },
@@ -187,16 +244,22 @@ const generateSingleVisitPage = async (
   detailsFields.forEach((field, i) => {
     const rowIndex = Math.floor(i / 3);
     const colIndex = i % 3;
-    const x = pageMargin + (colWidth * colIndex) + 5; // +5 for inner padding
-    const y = yPosition + (rowHeight * rowIndex) + 7;
+    const x = pageMargin + colWidth * colIndex + 5; // +5 for inner padding
+    const y = yPosition + rowHeight * rowIndex + 7;
 
-    pdf.setFont("helvetica", "bold").setFontSize(8).setTextColor(...mutedColor);
+    pdf
+      .setFont("helvetica", "bold")
+      .setFontSize(8)
+      .setTextColor(...mutedColor);
     pdf.text(field.label, x, y);
 
-    pdf.setFont("helvetica", "normal").setFontSize(10).setTextColor(...textColor);
+    pdf
+      .setFont("helvetica", "normal")
+      .setFontSize(10)
+      .setTextColor(...textColor);
     pdf.text(field.value, x, y + 5);
   });
-  
+
   yPosition += 55; // Move cursor down past the details box
 
   // --- 4. Medical Information Sections ---
@@ -204,13 +267,23 @@ const generateSingleVisitPage = async (
     yPosition = drawSectionHeader("Patient Problems & Symptoms", yPosition);
     yPosition += drawHorizontalGrid(patient.patientProblem, yPosition, 21);
   }
+
+  // Dynamic section titles based on visit number
   if (yPosition < maxContentY) {
-    yPosition = drawSectionHeader("Medicine Prescriptions", yPosition);
-    yPosition += drawHorizontalGrid(treatment.medicinePrescriptions || "", yPosition);
+    const medicineTitle =
+      pageNumber === 1 ? "Medicine Prescriptions" : "Follow-up";
+    yPosition = drawSectionHeader(medicineTitle, yPosition);
+    yPosition += drawHorizontalGrid(
+      treatment.medicinePrescriptions || "",
+      yPosition
+    );
   }
+
   if (yPosition < maxContentY) {
     const advisories = treatment.advisories || treatment.notes || "";
-    yPosition = drawSectionHeader("Medical Advisories & Instructions", yPosition);
+    const advisoryTitle =
+      pageNumber === 1 ? "Medical Advisories & Instructions" : "Prescriptions";
+    yPosition = drawSectionHeader(advisoryTitle, yPosition);
     yPosition += drawHorizontalGrid(advisories, yPosition);
   }
 
@@ -218,8 +291,15 @@ const generateSingleVisitPage = async (
   const footerY = pageHeight - 15;
   pdf.setDrawColor(...mutedColor).setLineWidth(0.3);
   pdf.line(pageMargin, footerY, pageWidth - pageMargin, footerY);
-  pdf.setFont("helvetica", "normal").setFontSize(8).setTextColor(...mutedColor);
+  pdf
+    .setFont("helvetica", "normal")
+    .setFontSize(8)
+    .setTextColor(...mutedColor);
   pdf.text("SHRI K D HOMEOPATHIC CLINIC", pageMargin, footerY + 5);
-  const generationDate = `Generated on: ${new Date().toLocaleDateString("en-GB")} | Visit ${pageNumber}/${totalPages}`;
-  pdf.text(generationDate, pageWidth - pageMargin, footerY + 5, { align: "right" });
+  const generationDate = `Generated on: ${new Date().toLocaleDateString(
+    "en-GB"
+  )} | Visit ${pageNumber}/${totalPages}`;
+  pdf.text(generationDate, pageWidth - pageMargin, footerY + 5, {
+    align: "right",
+  });
 };
