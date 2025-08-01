@@ -22,6 +22,7 @@ import {
   Trash2,
   Scale,
   Ruler,
+  Heart,
   Activity,
 } from "lucide-react";
 import { PatientData, TreatmentEntry } from "@/types/patient";
@@ -112,7 +113,7 @@ const EditPatientModal = ({
       setEditedPatient({
         ...editedPatient,
         treatmentEntries: editedPatient.treatmentEntries.filter(
-          (entry) => entry.id !== entryId
+          (entry) => (entry._id || entry.id) !== entryId
         ),
       });
     }
@@ -207,6 +208,23 @@ const EditPatientModal = ({
                 </div>
                 <div>
                   <Label
+                    htmlFor="edit-bp"
+                    className="flex items-center space-x-2"
+                  >
+                    <Heart className="h-4 w-4 text-blue-600" />
+                    <span>BP (mmHg)</span>
+                  </Label>
+                  <Input
+                    id="edit-bp"
+                    value={editedPatient.bp || ""}
+                    onChange={(e) =>
+                      handleBasicInfoChange("bp", e.target.value)
+                    }
+                    placeholder="Enter blood pressure"
+                  />
+                </div>
+                <div>
+                  <Label
                     htmlFor="edit-rbs"
                     className="flex items-center space-x-2"
                   >
@@ -288,7 +306,7 @@ const EditPatientModal = ({
             <CardContent className="space-y-4">
               {editedPatient.treatmentEntries.map((entry, index) => (
                 <div
-                  key={entry.id}
+                  key={entry._id || entry.id || `entry-${index}`}
                   className="border rounded-lg p-4 bg-gray-50"
                 >
                   <div className="flex justify-between items-start mb-3">
@@ -302,7 +320,11 @@ const EditPatientModal = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRemoveTreatmentEntry(entry.id)}
+                      onClick={() =>
+                        handleRemoveTreatmentEntry(
+                          entry._id || entry.id || `entry-${index}`
+                        )
+                      }
                       className="text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
