@@ -124,13 +124,13 @@ const generateSingleVisitPage = async (
     if (points.length === 0) {
       pdf
         .setFont("helvetica", "italic")
-        .setFontSize(9)
+        .setFontSize(8)
         .setTextColor(...mutedColor);
       pdf.text("No items recorded for this section.", pageMargin + 5, y);
       return 15;
     }
     const itemPadding = 10,
-      rowHeight = 7,
+      rowHeight = 6,
       numColumns = 3;
     const colWidth =
       (contentWidth - itemPadding * (numColumns - 1)) / numColumns;
@@ -146,9 +146,9 @@ const generateSingleVisitPage = async (
         (pdf.getStringUnitWidth(itemNumber) * pdf.getFontSize()) /
           pdf.internal.scaleFactor +
         2;
-      pdf.setTextColor(...secondaryColor).setFont("helvetica", "bold");
+      pdf.setTextColor(...secondaryColor).setFont("helvetica", "bold").setFontSize(9);
       pdf.text(itemNumber, currentX, currentY);
-      pdf.setTextColor(...textColor).setFont("helvetica", "normal");
+      pdf.setTextColor(...textColor).setFont("helvetica", "normal").setFontSize(9);
       const truncatedText = pdf.splitTextToSize(
         points[i],
         colWidth - numberWidth
