@@ -18,6 +18,12 @@ const treatmentEntrySchema = new Schema({
 
 const patientSchema = new Schema(
   {
+    prefix: {
+      type: String,
+      enum: ["Mr.", "Mrs.", "Ms.", "Dr.", "Master", "Miss"],
+      default: "Mr.",
+      trim: true,
+    },
     patientName: {
       type: String,
       required: true,
@@ -25,6 +31,11 @@ const patientSchema = new Schema(
     },
     age: {
       type: String,
+      required: true,
+    },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
       required: true,
     },
     weight: {

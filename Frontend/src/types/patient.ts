@@ -11,10 +11,12 @@ export interface TreatmentEntry {
 export interface PatientData {
   _id?: string; // MongoDB ID
   id?: string; // For backward compatibility
+  prefix?: string;
   patientName: string;
   age: string;
+  gender?: string;
   weight?: string;
-  height?: string;
+  bp?: string;
   rbs?: string;
   address: string;
   referenceNumber: string;

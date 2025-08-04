@@ -6,6 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -21,9 +28,11 @@ import {
   FileText,
   Trash2,
   Scale,
-  Ruler,
   Heart,
   Activity,
+  User,
+  UserCheck,
+  Users,
 } from "lucide-react";
 import { PatientData, TreatmentEntry } from "@/types/patient";
 
@@ -151,9 +160,42 @@ const EditPatientModal = ({
               <CardTitle className="text-lg">Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <Label htmlFor="edit-name">Patient Name</Label>
+                  <Label
+                    htmlFor="edit-prefix"
+                    className="flex items-center space-x-2"
+                  >
+                    <UserCheck className="h-4 w-4 text-blue-600" />
+                    <span>Prefix</span>
+                  </Label>
+                  <Select
+                    value={editedPatient.prefix || "Mr."}
+                    onValueChange={(value) =>
+                      handleBasicInfoChange("prefix", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select prefix" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Mr.">Mr.</SelectItem>
+                      <SelectItem value="Mrs.">Mrs.</SelectItem>
+                      <SelectItem value="Ms.">Ms.</SelectItem>
+                      <SelectItem value="Dr.">Dr.</SelectItem>
+                      <SelectItem value="Master">Master</SelectItem>
+                      <SelectItem value="Miss">Miss</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-3">
+                  <Label
+                    htmlFor="edit-name"
+                    className="flex items-center space-x-2"
+                  >
+                    <User className="h-4 w-4 text-blue-600" />
+                    <span>Patient Name</span>
+                  </Label>
                   <Input
                     id="edit-name"
                     value={editedPatient.patientName}
@@ -162,6 +204,8 @@ const EditPatientModal = ({
                     }
                   />
                 </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="edit-age">Age</Label>
                   <Input
@@ -172,6 +216,32 @@ const EditPatientModal = ({
                     }
                   />
                 </div>
+                <div>
+                  <Label
+                    htmlFor="edit-gender"
+                    className="flex items-center space-x-2"
+                  >
+                    <Users className="h-4 w-4 text-blue-600" />
+                    <span>Gender</span>
+                  </Label>
+                  <Select
+                    value={editedPatient.gender || ""}
+                    onValueChange={(value) =>
+                      handleBasicInfoChange("gender", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label
                     htmlFor="edit-weight"
@@ -187,23 +257,6 @@ const EditPatientModal = ({
                       handleBasicInfoChange("weight", e.target.value)
                     }
                     placeholder="Enter weight in kg"
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor="edit-height"
-                    className="flex items-center space-x-2"
-                  >
-                    <Ruler className="h-4 w-4 text-blue-600" />
-                    <span>Height (ft/cm)</span>
-                  </Label>
-                  <Input
-                    id="edit-height"
-                    value={editedPatient.height || ""}
-                    onChange={(e) =>
-                      handleBasicInfoChange("height", e.target.value)
-                    }
-                    placeholder="Enter height"
                   />
                 </div>
                 <div>

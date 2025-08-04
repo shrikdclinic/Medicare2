@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pill, FileText, Scale, Ruler, Activity } from "lucide-react";
+import { Plus, Pill, FileText, Scale, Heart, Activity } from "lucide-react";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -32,7 +32,7 @@ const AddTreatmentModal: React.FC<AddTreatmentModalProps> = ({
     advisories: "1. ",
     notes: "",
     weight: "",
-    height: "",
+    bp: "",
     rbs: "",
   });
 
@@ -86,7 +86,7 @@ const AddTreatmentModal: React.FC<AddTreatmentModalProps> = ({
       if (!formData.medicinePrescriptions.trim()) {
         toast({
           title: "Missing Information",
-          description: "Please add at least one medicine prescription",
+          description: "Please add at least one follow-up note",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -133,7 +133,7 @@ const AddTreatmentModal: React.FC<AddTreatmentModalProps> = ({
         advisories: "1. ",
         notes: "",
         weight: "",
-        height: "",
+        bp: "",
         rbs: "",
       });
 
@@ -188,16 +188,16 @@ const AddTreatmentModal: React.FC<AddTreatmentModalProps> = ({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="height" className="flex items-center space-x-2">
-                  <Ruler className="h-4 w-4 text-blue-600" />
-                  <span>Height</span>
+                <Label htmlFor="bp" className="flex items-center space-x-2">
+                  <Heart className="h-4 w-4 text-blue-600" />
+                  <span>BP (mmHg)</span>
                 </Label>
                 <Input
-                  id="height"
-                  name="height"
-                  value={formData.height}
+                  id="bp"
+                  name="bp"
+                  value={formData.bp}
                   onChange={handleInputChange}
-                  placeholder="Enter height"
+                  placeholder="Enter blood pressure"
                 />
               </div>
               <div className="space-y-2">
@@ -216,14 +216,14 @@ const AddTreatmentModal: React.FC<AddTreatmentModalProps> = ({
             </div>
           </div>
 
-          {/* Medicine Prescriptions */}
+          {/* Follow-up (previously Medicine Prescriptions) */}
           <div className="space-y-2">
             <Label
               htmlFor="medicinePrescriptions"
               className="flex items-center space-x-2"
             >
               <Pill className="h-4 w-4 text-green-600" />
-              <span>Medicine Prescriptions *</span>
+              <span>Follow-up *</span>
             </Label>
             <Textarea
               id="medicinePrescriptions"
@@ -231,21 +231,21 @@ const AddTreatmentModal: React.FC<AddTreatmentModalProps> = ({
               value={formData.medicinePrescriptions}
               onChange={handleInputChange}
               onKeyDown={handlePrescriptionKeyDown}
-              placeholder="1. Medicine name, dosage, frequency..."
+              placeholder="1. Follow-up notes, treatment progress, observations..."
               rows={6}
               required
               className="transition-all duration-200 focus:ring-2 focus:ring-green-500"
             />
             <p className="text-sm text-gray-500">
-              Press Enter to add a new medicine (auto-numbered)
+              Press Enter to add a new follow-up note (auto-numbered)
             </p>
           </div>
 
-          {/* Medical Advisories */}
+          {/* Prescriptions (previously Medical Advisories) */}
           <div className="space-y-2">
             <Label htmlFor="advisories" className="flex items-center space-x-2">
               <FileText className="h-4 w-4 text-blue-600" />
-              <span>Medical Advisories & Instructions</span>
+              <span>Prescriptions</span>
             </Label>
             <Textarea
               id="advisories"
@@ -253,12 +253,12 @@ const AddTreatmentModal: React.FC<AddTreatmentModalProps> = ({
               value={formData.advisories}
               onChange={handleInputChange}
               onKeyDown={handleAdvisoryKeyDown}
-              placeholder="1. Medical advice, diet instructions, precautions..."
+              placeholder="1. Medicine name, dosage, frequency, instructions..."
               rows={4}
               className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
             />
             <p className="text-sm text-gray-500">
-              Press Enter to add a new advisory (auto-numbered)
+              Press Enter to add a new prescription (auto-numbered)
             </p>
           </div>
 

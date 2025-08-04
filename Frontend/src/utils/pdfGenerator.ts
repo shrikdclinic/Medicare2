@@ -217,8 +217,11 @@ const generateSingleVisitPage = async (
   // CHANGE 2: Format patient name with age and gender
   const genderChar = patient.gender
     ? patient.gender.charAt(0).toUpperCase()
-    : "M";
-  const formattedName = `${patient.patientName} / ${patient.age} ${genderChar}`;
+    : "U"; // U for Unknown instead of defaulting to M
+  const patientDisplayName = patient.prefix
+    ? `${patient.prefix} ${patient.patientName}`
+    : patient.patientName;
+  const formattedName = `${patientDisplayName} / ${patient.age} ${genderChar}`;
 
   const detailsFields = [
     // Row 1

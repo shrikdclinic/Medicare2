@@ -18,15 +18,25 @@ import {
   Scale,
   Heart,
   Activity,
+  Users,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const PatientForm = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
+    prefix: "Mr.",
     patientName: "",
     age: "",
+    gender: "",
     weight: "",
     bp: "",
     rbs: "",
@@ -45,6 +55,13 @@ const PatientForm = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -182,8 +199,10 @@ const PatientForm = () => {
 
       // Reset form
       setFormData({
+        prefix: "Mr.",
         patientName: "",
         age: "",
+        gender: "",
         weight: "",
         bp: "",
         rbs: "",
@@ -191,9 +210,9 @@ const PatientForm = () => {
         referenceNumber: "",
         referencePerson: "",
         contactNumber: "",
-        patientProblem: "",
-        medicinePrescriptions: "",
-        advisories: "",
+        patientProblem: "1. ",
+        medicinePrescriptions: "1. ",
+        advisories: "1. ",
       });
     } catch (error) {
       console.error("Error creating patient:", error);
@@ -228,41 +247,93 @@ const PatientForm = () => {
             className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        {/* Patient Name */}
-        <div className="space-y-2">
-          <Label htmlFor="patientName" className="flex items-center space-x-2">
-            <User className="h-4 w-4 text-blue-600" />
-            <span>Patient Name *</span>
-          </Label>
-          <Input
-            id="patientName"
-            name="patientName"
-            value={formData.patientName}
-            onChange={handleInputChange}
-            placeholder="Enter patient's full name"
-            required
-            className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-          />
+
+        {/* Prefix and Name Row */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Prefix */}
+          <div className="space-y-2">
+            <Label htmlFor="prefix" className="flex items-center space-x-2">
+              <UserCheck className="h-4 w-4 text-blue-600" />
+              <span>Prefix</span>
+            </Label>
+            <Select
+              value={formData.prefix}
+              onValueChange={(value) => handleSelectChange("prefix", value)}
+            >
+              <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-blue-500">
+                <SelectValue placeholder="Select prefix" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Mr.">Mr.</SelectItem>
+                <SelectItem value="Mrs.">Mrs.</SelectItem>
+                <SelectItem value="Ms.">Ms.</SelectItem>
+                <SelectItem value="Dr.">Dr.</SelectItem>
+                <SelectItem value="Master">Master</SelectItem>
+                <SelectItem value="Miss">Miss</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Patient Name */}
+          <div className="md:col-span-3 space-y-2">
+            <Label
+              htmlFor="patientName"
+              className="flex items-center space-x-2"
+            >
+              <User className="h-4 w-4 text-blue-600" />
+              <span>Patient Name *</span>
+            </Label>
+            <Input
+              id="patientName"
+              name="patientName"
+              value={formData.patientName}
+              onChange={handleInputChange}
+              placeholder="Enter patient's full name"
+              required
+              className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
 
-        {/* Age */}
-        <div className="space-y-2">
-          <Label htmlFor="age" className="flex items-center space-x-2">
-            <Hash className="h-4 w-4 text-blue-600" />
-            <span>Age *</span>
-          </Label>
-          <Input
-            id="age"
-            name="age"
-            type="number"
-            value={formData.age}
-            onChange={handleInputChange}
-            placeholder="Enter age"
-            required
-            min="0"
-            max="150"
-            className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-          />
+        {/* Age and Gender Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Age */}
+          <div className="space-y-2">
+            <Label htmlFor="age" className="flex items-center space-x-2">
+              <Hash className="h-4 w-4 text-blue-600" />
+              <span>Age *</span>
+            </Label>
+            <Input
+              id="age"
+              name="age"
+              value={formData.age}
+              onChange={handleInputChange}
+              placeholder="Enter age"
+              required
+              className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Gender */}
+          <div className="space-y-2">
+            <Label htmlFor="gender" className="flex items-center space-x-2">
+              <Users className="h-4 w-4 text-blue-600" />
+              <span>Gender *</span>
+            </Label>
+            <Select
+              value={formData.gender}
+              onValueChange={(value) => handleSelectChange("gender", value)}
+            >
+              <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-blue-500">
+                <SelectValue placeholder="Select gender" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Male">Male</SelectItem>
+                <SelectItem value="Female">Female</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Weight */}

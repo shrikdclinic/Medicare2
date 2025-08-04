@@ -359,8 +359,10 @@ app.get("/api/patients", authenticateToken, async (req, res) => {
 app.post("/api/patients", authenticateToken, async (req, res) => {
   try {
     const {
+      prefix,
       patientName,
       age,
+      gender,
       weight,
       bp,
       rbs,
@@ -391,8 +393,10 @@ app.post("/api/patients", authenticateToken, async (req, res) => {
     }
 
     const newPatient = await Patient.create({
+      prefix,
       patientName,
       age,
+      gender,
       weight,
       bp,
       rbs,
@@ -452,8 +456,10 @@ app.get("/api/patients/:id", authenticateToken, async (req, res) => {
 app.put("/api/patients/:id", authenticateToken, async (req, res) => {
   try {
     const {
+      prefix,
       patientName,
       age,
+      gender,
       weight,
       bp,
       rbs,
@@ -479,8 +485,10 @@ app.put("/api/patients/:id", authenticateToken, async (req, res) => {
     }
 
     // Update patient
+    patient.prefix = prefix !== undefined ? prefix : patient.prefix;
     patient.patientName = patientName || patient.patientName;
     patient.age = age || patient.age;
+    patient.gender = gender !== undefined ? gender : patient.gender;
     patient.weight = weight !== undefined ? weight : patient.weight;
     patient.bp = bp !== undefined ? bp : patient.bp;
     patient.rbs = rbs !== undefined ? rbs : patient.rbs;
