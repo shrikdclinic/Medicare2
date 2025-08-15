@@ -146,9 +146,15 @@ const generateSingleVisitPage = async (
         (pdf.getStringUnitWidth(itemNumber) * pdf.getFontSize()) /
           pdf.internal.scaleFactor +
         2;
-      pdf.setTextColor(...secondaryColor).setFont("helvetica", "bold").setFontSize(9);
+      pdf
+        .setTextColor(...secondaryColor)
+        .setFont("helvetica", "bold")
+        .setFontSize(9);
       pdf.text(itemNumber, currentX, currentY);
-      pdf.setTextColor(...textColor).setFont("helvetica", "normal").setFontSize(9);
+      pdf
+        .setTextColor(...textColor)
+        .setFont("helvetica", "normal")
+        .setFontSize(9);
       const truncatedText = pdf.splitTextToSize(
         points[i],
         colWidth - numberWidth

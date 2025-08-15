@@ -1,6 +1,7 @@
 // backend/server.js
 const express = require("express");
-const sgMail = require("@sendgrid/mail");
+const FormData = require("form-data");
+const Mailgun = require("mailgun.js");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const jwt = require("jsonwebtoken");
@@ -20,8 +21,14 @@ mongoose
 const User = require("./models/User");
 const Patient = require("./models/Patient");
 
-// Initialize SendGrid
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Initialize Mailgun
+const mailgun = new Mailgun(FormData);
+const mg = mailgun.client({
+  username: "api",
+  key: process.env.MAILGUN_API_KEY || "API_KEY",
+  // If you have an EU domain, uncomment and set the correct URL:
+  // url: "https://api.eu.mailgun.net"
+});
 
 // Middleware
 app.use(cors());
@@ -77,21 +84,20 @@ const authenticateToken = (req, res, next) => {
   );
 };
 
-// Send OTP using SendGrid
+// Send OTP using Mailgun
 const sendOtpEmail = async (email, otp) => {
   console.log(`Attempting to send email to: ${email}`);
   console.log(
-    `Using SendGrid API key: ${
-      process.env.SENDGRID_API_KEY ? "Set" : "Not set"
-    }`
+    `Using Mailgun API key: ${process.env.MAILGUN_API_KEY ? "Set" : "Not set"}`
   );
   console.log(`From email: ${process.env.FROM_EMAIL}`);
-  const msg = {
-    to: email,
-    from: {
-      email: process.env.FROM_EMAIL, // Must be verified in SendGrid
-      name: "MediCare Clinic",
-    },
+  console.log(`Mailgun domain: ${process.env.MAILGUN_DOMAIN}`);
+
+  const mailData = {
+    from:
+      process.env.FROM_EMAIL ||
+      `MediCare Clinic <postmaster@${process.env.MAILGUN_DOMAIN}>`,
+    to: [email],
     subject: "MediCare Clinic - Login Verification Code",
     html: `
       <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa;">
@@ -172,10 +178,11 @@ const sendOtpEmail = async (email, otp) => {
   };
 
   try {
-    await sgMail.send(msg);
+    const data = await mg.messages.create(process.env.MAILGUN_DOMAIN, mailData);
     console.log(`OTP email sent successfully to ${email}`);
+    console.log("Mailgun response:", data);
   } catch (error) {
-    console.error("SendGrid error:", error.response?.body || error);
+    console.error("Mailgun error:", error);
     throw new Error("Failed to send email");
   }
 };
@@ -221,7 +228,7 @@ app.post("/api/auth/send-otp", otpLimiter, async (req, res) => {
       userType: userType || "doctor",
     });
 
-    // Send OTP via SendGrid
+    // Send OTP via Mailgun
     await sendOtpEmail(email, otp);
 
     res.json({
@@ -313,7 +320,7 @@ app.post("/api/auth/verify-otp", async (req, res) => {
         loginTime: Date.now(),
       },
       process.env.JWT_SECRET || "your-secret-key",
-      { expiresIn: "24h" }
+      { expiresIn: "14d" } // 2 weeks expiry
     );
 
     res.json({
@@ -732,7 +739,11 @@ setInterval(() => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log("SendGrid configured:", !!process.env.SENDGRID_API_KEY);
+  console.log("Mailgun configured:", !!process.env.MAILGUN_API_KEY);
+  console.log(
+    "Mailgun domain:",
+    process.env.MAILGUN_DOMAIN || "Not configured"
+  );
   console.log("MongoDB configured:", !!process.env.MONGODB_URI);
 });
 
