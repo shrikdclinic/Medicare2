@@ -31,7 +31,31 @@ const mg = mailgun.client({
 });
 
 // Middleware
-app.use(cors());
+// Configure CORS to allow your frontend origin(s) and to properly respond to preflight (OPTIONS)
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  "https://shrikdclinic.netlify.app",
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      return callback(new Error("CORS policy: This origin is not allowed"));
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
+// Ensure the server responds to preflight requests for all routes
+app.options("*", cors());
+
 app.use(express.json());
 
 // Rate limiting for OTP requests
@@ -193,6 +217,14 @@ app.get("/", (req, res) => {
 });
 
 // Send OTP endpoint
+// Respond to preflight for this endpoint explicitly
+app.options("/api/auth/send-otp", (req, res) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return res.sendStatus(204);
+});
+
 app.post("/api/auth/send-otp", otpLimiter, async (req, res) => {
   try {
     const { email, userType } = req.body;
